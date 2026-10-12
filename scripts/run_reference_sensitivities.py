@@ -1,13 +1,14 @@
-"""Run and persist the declared reference-month endpoint/degradation grid.
+"""Run the optional endpoint/degradation grid on the November 2022 month.
 
-The reference period is one month, not a financial year. The exclusivity
-reduction in ``exclusivity_binding_mask`` keeps every scenario at a strict
-1e-6 relative gap, so the whole grid runs in well under a minute and is
-re-run by CI rather than quoted from a stale spreadsheet.
+This is a secondary analysis of the perfect-foresight rolling dispatch, not
+part of the three-layer comparison (``scripts/run_layers.py``), and CI does
+not run it. The exclusivity reduction in ``exclusivity_binding_mask`` keeps
+every scenario at a strict 1e-6 relative gap; the grid takes about 100
+seconds, 74 of them in the A$10/MWh case.
 
 The A$0/MWh degradation case is deliberately out of scope: at zero degradation
 the model is paid to burn energy through round-trip losses, the exclusivity
-binary binds at 23% of intervals instead of 0.55%, and the resulting MILP is
+binary binds at 38% of intervals instead of 2.7%, and the resulting MILP is
 not tractable at a strict gap. See docs/VALIDATION.md.
 """
 

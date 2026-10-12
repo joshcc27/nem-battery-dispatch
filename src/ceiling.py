@@ -6,25 +6,30 @@ import pandas as pd
 
 from .config import BatteryConfig
 from .horizon import _normalise_prices
-from .optimiser import solve_window
+from .optimiser import DispatchWindow, solve_window
 from .settlement import RevenueResult
 
 
-def perfect_foresight_ceiling(
+def perfect_foresight_bound(
     prices: pd.DataFrame | pd.Series,
     asset: BatteryConfig,
     *,
     soc_initial: float,
     deg_cost: float = 0.0,
     terminal_value_per_mwh: float = 0.0,
-) -> dict[str, float]:
+) -> tuple[DispatchWindow, pd.DataFrame]:
     """Solve the whole period as one LP with the exclusivity binary removed.
 
     Removing the rolling look-ahead limit and the exclusivity constraint can
     only raise the optimum, and the throughput tie-breaker is excluded, so the
     value bounds every feasible dispatch of the same asset, prices, starting SOC
-    and terminal valuation from above. The binaries are what make the MILP
-    expensive; the LP solves a full financial year in seconds.
+    and terminal valuation from above. This is layer 1, the theoretical maximum.
+    The binaries are what make the MILP expensive; the LP solves a month in
+    about two seconds, and the exact whole-month MILP did not finish in ten
+    minutes.
+
+    The returned dispatch may charge and discharge in the same interval where
+    burning energy pays, so it is the bound's schedule, not a settleable one.
     """
     frame = _normalise_prices(prices)
     result = solve_window(
@@ -36,6 +41,25 @@ def perfect_foresight_ceiling(
         terminal_value_per_mwh=terminal_value_per_mwh,
         enforce_exclusivity=False,
         throughput_tie_breaker=0.0,
+    )
+    return result, result.to_frame(frame["settlementdate"].to_numpy())
+
+
+def perfect_foresight_ceiling(
+    prices: pd.DataFrame | pd.Series,
+    asset: BatteryConfig,
+    *,
+    soc_initial: float,
+    deg_cost: float = 0.0,
+    terminal_value_per_mwh: float = 0.0,
+) -> dict[str, float]:
+    """The layer-1 bound as the audit fields every run is gated against."""
+    result, _ = perfect_foresight_bound(
+        prices,
+        asset,
+        soc_initial=soc_initial,
+        deg_cost=deg_cost,
+        terminal_value_per_mwh=terminal_value_per_mwh,
     )
     return {
         "perfect_foresight_ceiling_aud": result.objective_value,

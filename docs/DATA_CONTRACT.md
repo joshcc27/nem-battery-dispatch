@@ -1,9 +1,11 @@
 # Input data contract
 
-The model accepts AEMO five-minute `DISPATCHPRICE` data only. A study period is
-expressed as physical boundaries `[start, end)`, while AEMO timestamps are
-interval-ending, so the required observations are `(start, end]` in fixed
-UTC+10 (`AEST`). The timestamp at 1 July 00:00 belongs to the financial year
+The model settles against AEMO five-minute `DISPATCHPRICE` data only; AEMO's
+published price forecasts are an input to the forecast layers, not to
+settlement (see [AEMO forecast contract](#aemo-forecast-contract)). A study
+period is expressed as physical boundaries `[start, end)`, while AEMO
+timestamps are interval-ending, so the required observations are
+`(start, end]` in fixed UTC+10 (`AEST`). The timestamp at 1 July 00:00 belongs to the financial year
 that has just ended.
 
 ## Required price fields
@@ -29,13 +31,47 @@ month-boundary gaps. Missing partitions are downloaded through NEMOSIS and
 recorded in `data/cache/manifest.jsonl`. Existing partitions are immutable
 cache hits and require no network access.
 
-The committed reference manifest is
-[`data/manifests/sa1_2022-11.json`](../data/manifests/sa1_2022-11.json). It
-records source, exact boundaries, partition row counts, quality checks, the
-rationale for the period, and a canonical checksum, without committing the
-market-data files themselves. `scripts/verify_reference.py` re-derives every one
-of those values from a fresh fetch and fails if any differs, so the manifest is
-an enforced contract rather than a description.
+One committed manifest per input month, in
+[`data/manifests/`](../data/manifests/), covers the two reference months and
+their two warm-up months. Each records source, exact boundaries, partition row
+counts, quality checks, the rationale for the period, and canonical checksums
+of its prices and of its AEMO forecasts, without committing the market-data
+files themselves. `scripts/verify_reference.py` re-derives every one of those
+values from a fresh fetch and fails if any differs, so the manifest is an
+enforced contract rather than a description.
+
+## AEMO forecast contract
+
+The AEMO forecast layers read two MMSDM archive tables, fetched directly from
+NEMWeb by `src/aemo_forecasts.py`:
+
+| Table | Archive folder | Runs | Each run forecasts |
+|---|---|---|---|
+| `PREDISPATCHPRICE` | `PREDISP_ALL_DATA` | every 30 minutes | 30-minute periods to the end of the next trading day |
+| `P5MIN_REGIONSOLUTION` | `DATA` | every 5 minutes | the next twelve 5-minute intervals |
+
+Only the requested region's `INTERVENTION = 0` rows are kept, as `run_id`,
+`published`, `target` and `rrp`. A run's `published` time is the latest
+`LASTCHANGED` of any of its rows, and a forecaster may use a run only once it
+is published: at a decision time, the latest run published at or before it.
+After filtering, `(run_id, target)` must be unique, every run must have one
+publication time, and every forecast price must lie inside the dated market
+floor and cap.
+
+The cache stores one parquet file per table, region and archive month under
+`data/cache/partitions/{predispatch,p5min}_forecast`. Pre-dispatch archive
+months are trading-day months, which start at 04:00. NEMSEER is the usual
+client for these files but pins `xarray` below what linopy requires, so it is
+not used.
+
+**October 2022 is missing from the all-runs pre-dispatch archive.** Only the
+`_D_` file, which keeps the final forecast for each period, exists for that
+month, and it cannot be used without leaking later information. The gap is
+stored as an empty partition and pinned in
+[`data/manifests/sa1_2022-10.json`](../data/manifests/sa1_2022-10.json) with a
+zero row count, so a later back-fill of the archive is detected rather than
+silently changing results. Its consequences are set out in
+[RESULTS.md](RESULTS.md#forecast-driven-layers).
 
 ## Loss-factor contract
 

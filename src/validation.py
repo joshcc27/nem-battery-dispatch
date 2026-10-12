@@ -176,7 +176,7 @@ DISPATCH_AUDIT_KEYS = (
     "horizon_gap_aud",
 )
 
-# A rolling run is a feasible point of the ceiling LP, so it can exceed the
+# Every layer's dispatch is a feasible point of the ceiling LP, so it can exceed the
 # ceiling only by solver tolerance. Anything more is a modelling bug.
 CEILING_ABSOLUTE_TOLERANCE_AUD = 1.0
 CEILING_RELATIVE_TOLERANCE = 1e-6
@@ -189,6 +189,7 @@ def assert_audit_passes(
     exclusivity_tolerance: float = SOLVER_INTEGRALITY_TOLERANCE,
     mip_gap_tolerance: float = 1.01e-6,
     require_price_audit: bool = False,
+    require_cycle_break_even: bool = True,
 ) -> None:
     """Fail a run that misses any declared gate.
 
@@ -196,6 +197,11 @@ def assert_audit_passes(
     required keys are asserted before any of them is evaluated. Callers that
     merged :func:`audit_prices` set ``require_price_audit`` to gate the inputs
     as well; callers that settle against already-audited prices do not.
+
+    A perfect-foresight dispatch never completes a loss-making cycle, so that
+    is a gate. A forecast-driven dispatch legitimately can when the forecast is
+    wrong; it sets ``require_cycle_break_even=False`` and the count is reported
+    rather than gated. The key must still be present.
     """
     required = list(DISPATCH_AUDIT_KEYS)
     if require_price_audit:
@@ -218,7 +224,10 @@ def assert_audit_passes(
         failures.append("non-optimal solver window")
     if float(audit["max_solver_mip_gap"]) > mip_gap_tolerance:
         failures.append("solver MIP gap")
-    if int(audit["completed_cycle_break_even_violation_count"]) != 0:
+    if (
+        require_cycle_break_even
+        and int(audit["completed_cycle_break_even_violation_count"]) != 0
+    ):
         failures.append("completed-cycle break-even")
     ceiling_tolerance = CEILING_ABSOLUTE_TOLERANCE_AUD + CEILING_RELATIVE_TOLERANCE * abs(
         float(audit["perfect_foresight_ceiling_aud"])
@@ -284,4 +293,5 @@ def audit_completed_cycles(
         "completed_cycle_segment_count": len(margins),
         "completed_cycle_break_even_violation_count": len(violations),
         "minimum_completed_cycle_margin": min(margins) if margins else np.nan,
+        "completed_cycle_loss_aud": 0.0 - float(sum(violations)),
     }

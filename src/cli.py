@@ -1,4 +1,7 @@
-"""Small command-line interface for fetching and running one financial year."""
+"""Command-line interface for one perfect-foresight rolling run over any period.
+
+The three-layer comparison is run by ``scripts/run_layers.py``.
+"""
 
 from __future__ import annotations
 

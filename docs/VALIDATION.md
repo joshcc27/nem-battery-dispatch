@@ -35,6 +35,84 @@ the November grid took 1,027s one interval at a time and 343s adding whole
 negative-price blocks, against 145s for the dominance mask. Fewer binaries gave
 the branch-and-bound a harder search, not an easier one.
 
+## Forecast-driven layers
+
+Layers 2 and 3 and the perfect-forecast policy (`src/mpc.py`) are audited by
+the same functions as the perfect-foresight run, with one deliberate
+difference:
+
+- **Every layer must stay below the layer-1 bound.** Every forecast-driven
+  dispatch is a feasible point of the bound LP, so the ceiling gate applies
+  unchanged.
+- **Physics, exclusivity, solver status and MIP gap are gated unchanged.** Only
+  the committed hour of each decision is implemented, so only it carries
+  exclusivity binaries; the uncommitted look-ahead is relaxed, which affects
+  what the policy plans but never what it does.
+- **Loss-making cycles are reported, not gated.** A dispatch made on a wrong
+  forecast can legitimately discharge below its purchase cost, so
+  `assert_audit_passes(require_cycle_break_even=False)` still demands the key
+  but does not fail on it. The perfect-forecast policy keeps the hard gate.
+
+The policies are protected against reading the future by construction and by
+test. Forecasters receive only the array of prices settled before the decision.
+`tests/test_mpc.py` changes every price after a cut-off and asserts that all
+dispatch before it is identical, and the layer-3 bootstrap only draws error
+days whose whole horizon had settled.
+
+Bid execution is checked the same way. The offer limits come from the dual of
+each committed interval's energy balance. HiGHS returns no duals for a MIP, so
+on a decision with exclusivity binaries they are fixed at their optimum and
+the LP re-solved; only true binaries are fixed, because a mode the dominance
+test left continuous may legitimately be fractional, and fixing it cost
+A$15.50 on a test case before that was caught. `tests/test_mpc.py` pins the
+dual's sign on a hand-worked case (sell at A$200 now with A$100 next best, so a
+stored MWh is worth exactly A$100), checks declined spikes, planned quantities
+at the limit, full power beyond it, SOC headroom and the exclusivity mode at
+deeply negative prices, and asserts that bidding a perfect forecast executes
+the plan exactly on prices that make binaries bind. On the reference data the
+perfect-forecast policy reproduces A$3,608,856.15 under bids as well. The first
+version of the rule missed one interval there, at −A$207 with the plan idle in
+charge mode, where both directions clear; carrying the plan's mode into
+execution fixed it.
+
+### AEMO forecasts, error pools and bands
+
+- **Publication time, not run time.** A forecaster sees an AEMO run only once
+  its last row was published (`LASTCHANGED`). The 00:05 P5MIN run is published
+  at about 00:00:27, so a decision at 00:00 uses the 00:00 run.
+  `tests/test_aemo_forecasts.py` asserts that a run published one minute after
+  the decision is ignored, that P5MIN takes precedence over pre-dispatch, that
+  5-minute intervals map to the 30-minute pre-dispatch period ending at or
+  after them, and that a run older than its maximum age falls back to the
+  profile rather than being used stale.
+- **Archive gaps are not filled with another forecaster's errors.** The error
+  pool for layer 3 and for the bid bands re-runs the same forecaster at past
+  decisions. Where the AEMO forecaster had no current pre-dispatch run (October
+  2022), that lag is left out; a thin pool is resampled with replacement and an
+  empty one gives the point forecast and a single price limit. Every decision
+  records `error_pool_days` and `band_spread_aud` in the trace.
+- **Capped errors.** Past errors are winsorized at the pool's 5th and 95th
+  percentiles before they become scenarios or band spreads; a test pins the
+  cap to the quantile.
+- **Bands collapse to the plan under a perfect forecast.** A perfect forecast
+  has no errors, so its ten bands sit at one limit and execution equals the
+  plan; `tests/test_mpc.py` asserts this on prices that make binaries bind,
+  pins band quantities on a hand-worked four-band case, and checks that the
+  spread comes from errors at the committed hour's lead times only.
+- **Solver retry.** After an extreme price scenario the warm-started basis can
+  leave HiGHS without a verdict ("Unknown"). Every solve retries once from a
+  cold start and fails on a second non-optimal result; the uncapped-error run
+  hit this once before the retry was added.
+
+The direct HiGHS model is built once per shape and only re-priced between
+decisions, which takes each solve from about 0.2s in linopy to about 0.01s.
+It is a second builder of the same MILP, so `tests/test_mpc.py` asserts that it
+reproduces `solve_window`'s objective and binary count on random prices, that
+identical scenarios reduce it to the deterministic model, and a hand-worked
+case where the shared committed hour hedges between two scenarios. As an
+end-to-end check, the perfect-forecast policy reproduces the 48-hour/daily
+rolling headline of A$3,608,856.15 to the cent.
+
 A gate whose audit key is absent is treated as a **missing check, not a passing
 one**. `assert_audit_passes` asserts every required key is present before
 evaluating any of them, so a caller that forgets to merge one of the audit
@@ -46,7 +124,7 @@ cycling and zero-cost MIP branches; all reported revenue is recomputed without
 it by the authoritative settlement function.
 
 For the November 2022 SA1 reference month, 8,640 intervals and 30 daily
-committed windows passed in every scenario.
+committed windows passed in every perfect-foresight scenario.
 
 ## Exclusivity is tested in MW, not MW²
 
@@ -150,7 +228,9 @@ at a strict `1e-6` relative gap with no time limit and no fallback.
 
 `pytest` covers hand-worked settlement, loss-factor economics, SOC physics,
 rolling-window carry-forward, timestamp boundaries, cache behavior, MLF input
-validation, audit-gate completeness and sensitivity behavior. The deterministic
+validation, audit-gate completeness, sensitivity behavior, the forecasters and
+error bootstrap, the direct HiGHS model, look-ahead leakage and an end-to-end
+run of every layer. The deterministic
 CI fixture exercises fetch-independent optimization, settlement, metrics and
 audits end to end.
 
@@ -164,7 +244,8 @@ look-ahead tail. Each mutation must make its targeted test fail.
 CI runs two jobs. The offline job runs tests with coverage, byte-compiles
 source/tests/scripts, executes the deterministic fixture and runs all mutation
 checks. The reference job downloads real AEMO data, verifies it against the
-committed manifest checksum with `scripts/verify_reference.py`, and re-runs the
-full published scenario grid. Because the whole grid takes about 100 seconds,
+committed manifest checksums with `scripts/verify_reference.py` — both
+reference months and both warm-up months — and re-runs the three-layer
+comparison with `scripts/run_layers.py`. Because that takes about 80 seconds,
 the published result is continuously verified rather than quoted from a run
 nobody can afford to repeat.

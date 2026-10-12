@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "dataset_id": "aemo_dispatchprice_sa1_2023-03",
+  "source": {
+    "publisher": "Australian Energy Market Operator",
+    "table": "DISPATCHPRICE",
+    "archive_url": "https://nemweb.com.au/Data_Archive/Wholesale_Electricity/MMSDM/",
+    "retrieval_library": "NEMOSIS",
+    "region_filter": [
+      "SA1"
+    ],
+    "intervention_filter": 0
+  },
+  "period": {
+    "physical_start_inclusive": "2023-03-01T00:00:00+10:00",
+    "physical_end_exclusive": "2023-04-01T00:00:00+10:00",
+    "first_interval_end": "2023-03-01T00:05:00+10:00",
+    "last_interval_end": "2023-04-01T00:00:00+10:00",
+    "interval_minutes": 5,
+    "timezone": "fixed UTC+10 (AEST)",
+    "timestamp_semantics": "interval ending; physical range is (start, end]",
+    "selection_rationale": "Forecast warm-up history for the 2023-04 reference month: read by the layer-2 forecasters and the layer-3 error bootstrap, never dispatched or settled."
+  },
+  "partitions": [
+    {
+      "month": "2023-03",
+      "row_count": 8928
+    }
+  ],
+  "validation": {
+    "row_count": 8928,
+    "expected_row_count": 8928,
+    "duplicate_key_count": 0,
+    "missing_interval_count": 0,
+    "unexpected_interval_count": 0,
+    "negative_price_interval_share": 0.2407,
+    "rrp_min_aud_per_mwh": -982.42082,
+    "rrp_max_aud_per_mwh": 1004.7,
+    "canonical_price_sha256": "8a87c45dba464729d31e07d786f4f96a1d3a532330736c465f692499cade50ce",
+    "checksum_definition": "SHA-256 of pandas uint64 row hashes after sorting settlementdate, regionid, rrp"
+  },
+  "forecasts": {
+    "predispatch": {
+      "source": "MMSDM PREDISP_ALL_DATA/PUBLIC_DVD_PREDISPATCHPRICE",
+      "missing_from_archive": false,
+      "row_count": 82584,
+      "run_count": 1488,
+      "canonical_sha256": "dc8944c0ee18f30bc740e1d14aaf578a550c5f3e546b92c15f32a7ff2698ff03"
+    },
+    "p5min": {
+      "source": "MMSDM DATA/PUBLIC_DVD_P5MIN_REGIONSOLUTION",
+      "missing_from_archive": false,
+      "row_count": 107136,
+      "run_count": 8928,
+      "canonical_sha256": "373bdf24acf3f50f2226d1c3eb5c2cdead2fe3a35e86ad23854248170b1311d7"
+    }
+  }
+}

@@ -186,7 +186,7 @@ def solve_window(
     )
     # One binary per interval is redundant: simultaneous charge and discharge is
     # strictly dominated wherever burning energy does not pay, which is all but
-    # 0.55% of FY2022-23 intervals at the headline A$25/MWh degradation cost.
+    # 2.7% of November 2022 intervals at the headline A$25/MWh degradation cost.
     binding = (
         exclusivity_binding_mask(cashflows, asset)
         if enforce_exclusivity

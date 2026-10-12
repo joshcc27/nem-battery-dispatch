@@ -128,3 +128,14 @@ def test_completed_cycle_audit_rejects_loss_making_cycle() -> None:
     assert audit["completed_cycle_break_even_violation_count"] == 1
     with pytest.raises(ValueError, match="break-even"):
         assert_audit_passes(passing_audit(**audit))
+
+
+def test_forecast_layers_report_loss_making_cycles_instead_of_failing() -> None:
+    """A wrong forecast can lose money on a cycle; only foresight cannot."""
+    audit = passing_audit(completed_cycle_break_even_violation_count=3)
+    with pytest.raises(ValueError, match="break-even"):
+        assert_audit_passes(audit)
+    assert_audit_passes(audit, require_cycle_break_even=False)
+    del audit["completed_cycle_break_even_violation_count"]
+    with pytest.raises(ValueError, match="incomplete"):
+        assert_audit_passes(audit, require_cycle_break_even=False)

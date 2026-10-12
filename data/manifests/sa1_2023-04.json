@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "dataset_id": "aemo_dispatchprice_sa1_2023-04",
+  "source": {
+    "publisher": "Australian Energy Market Operator",
+    "table": "DISPATCHPRICE",
+    "archive_url": "https://nemweb.com.au/Data_Archive/Wholesale_Electricity/MMSDM/",
+    "retrieval_library": "NEMOSIS",
+    "region_filter": [
+      "SA1"
+    ],
+    "intervention_filter": 0
+  },
+  "period": {
+    "physical_start_inclusive": "2023-04-01T00:00:00+10:00",
+    "physical_end_exclusive": "2023-05-01T00:00:00+10:00",
+    "first_interval_end": "2023-04-01T00:05:00+10:00",
+    "last_interval_end": "2023-05-01T00:00:00+10:00",
+    "interval_minutes": 5,
+    "timezone": "fixed UTC+10 (AEST)",
+    "timestamp_semantics": "interval ending; physical range is (start, end]",
+    "selection_rationale": "The typical reference month, beside the extreme November 2022. Its negative-price share (18%) and median daily spread are close to the FY2022-23 medians, and it shares November's financial year and so its loss factors."
+  },
+  "partitions": [
+    {
+      "month": "2023-04",
+      "row_count": 8640
+    }
+  ],
+  "validation": {
+    "row_count": 8640,
+    "expected_row_count": 8640,
+    "duplicate_key_count": 0,
+    "missing_interval_count": 0,
+    "unexpected_interval_count": 0,
+    "negative_price_interval_share": 0.18067,
+    "rrp_min_aud_per_mwh": -619.80938,
+    "rrp_max_aud_per_mwh": 9899.5,
+    "canonical_price_sha256": "8cb10b62f693d61c51502e5cff2254127fb91203d95647117322e21a65ca7ccf",
+    "checksum_definition": "SHA-256 of pandas uint64 row hashes after sorting settlementdate, regionid, rrp"
+  },
+  "forecasts": {
+    "predispatch": {
+      "source": "MMSDM PREDISP_ALL_DATA/PUBLIC_DVD_PREDISPATCHPRICE",
+      "missing_from_archive": false,
+      "row_count": 79920,
+      "run_count": 1440,
+      "canonical_sha256": "3735e2f7e14c4d7b7ac5197abb763b331921664d2d6f58d950f8bccd8e539f1b"
+    },
+    "p5min": {
+      "source": "MMSDM DATA/PUBLIC_DVD_P5MIN_REGIONSOLUTION",
+      "missing_from_archive": false,
+      "row_count": 103680,
+      "run_count": 8640,
+      "canonical_sha256": "358705324836c9c0d93dcb8524d72a632176a9147f4ba050fc7962af00316762"
+    }
+  }
+}

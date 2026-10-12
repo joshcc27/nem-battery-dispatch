@@ -19,7 +19,7 @@
     "interval_minutes": 5,
     "timezone": "fixed UTC+10 (AEST)",
     "timestamp_semantics": "interval ending; physical range is (start, end]",
-    "selection_rationale": "One month is the reference period so the whole grid re-runs in CI. November 2022 is chosen because it is the hardest month in FY2022-23: 38% of intervals are negative-priced and 18 and 20 November are negative in all 288 intervals, so the exclusivity reduction and negative-price charging are exercised rather than assumed."
+    "selection_rationale": "The extreme reference month, beside the typical April 2023. November 2022 is the hardest month in FY2022-23: 38% of intervals are negative-priced and 18 and 20 November are negative in all 288 intervals, so the exclusivity reduction and negative-price charging are exercised rather than assumed."
   },
   "partitions": [
     {
@@ -38,5 +38,21 @@
     "rrp_max_aud_per_mwh": 15500.0,
     "canonical_price_sha256": "b9106b5bb75e1476e976b17330c1361b113859d11269bc9954a58afc22da55dc",
     "checksum_definition": "SHA-256 of pandas uint64 row hashes after sorting settlementdate, regionid, rrp"
+  },
+  "forecasts": {
+    "predispatch": {
+      "source": "MMSDM PREDISP_ALL_DATA/PUBLIC_DVD_PREDISPATCHPRICE",
+      "missing_from_archive": false,
+      "row_count": 79920,
+      "run_count": 1440,
+      "canonical_sha256": "fc8526be6fb36a032fbb215089a10b78826c8cba021644a36169f7deb6a9404d"
+    },
+    "p5min": {
+      "source": "MMSDM DATA/PUBLIC_DVD_P5MIN_REGIONSOLUTION",
+      "missing_from_archive": false,
+      "row_count": 103680,
+      "run_count": 8640,
+      "canonical_sha256": "0b321d861e2e1687b0ee63b01207f7c35469331edb104de67669eb9f78891e1b"
+    }
   }
 }
