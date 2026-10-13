@@ -1,0 +1,11 @@
+comparison,seed,difference_aud
+L3_aemo - L2_aemo,101,453561.4014113415
+L3_aemo - L2_aemo,202,-409907.82707350515
+L3_aemo - L2_aemo,303,7178.859219685197
+L3_aemo - L2_aemo,404,-242907.40645514056
+L3_aemo - L2_aemo,505,300081.31068338826
+L3_profile - L2_profile,101,-280522.3662608294
+L3_profile - L2_profile,202,-510892.4652437605
+L3_profile - L2_profile,303,-468349.8537250925
+L3_profile - L2_profile,404,-421480.440535713
+L3_profile - L2_profile,505,-443202.11569744535

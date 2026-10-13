@@ -338,11 +338,13 @@ partial version.
 
 ### Forecast-driven layers
 
-- **Price-taking bands re-priced every hour.** Each interval is offered in
-  ten bands around the plan's marginal value of stored energy, and the
-  battery never moves the price. In the NEM a participant's ten band prices
-  are fixed for the trading day and only the quantities are rebid; here the
-  band prices move with every hourly plan.
+- **Price-taking bands re-priced every hour (development months only).** Each
+  interval is offered in ten bands around the plan's marginal value of stored
+  energy, and the battery never moves the price. In the NEM a participant's
+  ten band prices are fixed for the trading day and only the quantities are
+  rebid, but here the band prices move with every hourly plan. The study's
+  headline execution, `fixed_bands`, follows the NEM rule. Its cost against
+  hourly re-pricing is measured in [RESEARCH_NOTE.md](RESEARCH_NOTE.md).
 - **Unsold closing inventory.** A declined discharge late in the month can
   leave energy stored at the end, which is valued at zero exactly as in the
   bound. `L3_profile` ends November holding 91 MWh.
@@ -357,7 +359,9 @@ partial version.
   from 22 November; see [DATA_CONTRACT.md](DATA_CONTRACT.md#aemo-forecast-contract).
 - **Anticipative scenario tails.** In layer 3 only the committed hour is shared
   across scenarios; after it, each scenario is solved as if its own future
-  were known, which overvalues holding energy for a spike.
+  were known. On the same scenario paths this makes the model expect 2–4%
+  more than a scenario tree does. The effect on realised revenue is small and
+  of mixed sign; see the extension in [RESEARCH_NOTE.md](RESEARCH_NOTE.md).
 - **Ten scenarios from 21 past days.** The scenario set is small, its errors
   are conditioned on nothing but time of day, and they are capped at their
   5th and 95th percentiles.
