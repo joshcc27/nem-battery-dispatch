@@ -1,0 +1,7 @@
+# One line ending everywhere, so file hashes (loss factors, the frozen
+# protocol, committed results) are identical on Windows and Linux checkouts.
+* text=auto eol=lf
+*.png binary
+*.parquet binary
+*.feather binary
+*.zip binary
