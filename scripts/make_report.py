@@ -55,6 +55,9 @@ def main() -> None:
     save(policies, "policies")
     compared = comparisons(run, args.execution)
     save(compared, "comparisons")
+    # The same predeclared comparisons under every other execution, descriptive.
+    for execution in sorted(set(run.summary["execution"]) - {args.execution, "none"}):
+        save(comparisons(run, execution), f"comparisons_{execution}")
     by_execution = execution_comparisons(run)
     save(by_execution, "execution_comparisons")
     seeds = seed_differences(run, args.execution)

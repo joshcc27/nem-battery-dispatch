@@ -147,6 +147,7 @@
   "files": {
     "policies.csv": "dc32b84b78c4aa4836f91d105fa8596e14a91f447077dbec3c55c3f12b2036d9",
     "comparisons.csv": "129be870d0977a89055a8546e1562aff869c735ae153b99edd6f5a732cc8f933",
+    "comparisons_bands.csv": "ba8365fb26a2cd9782457dc7a0b3642f097baac1f14038fa2d89475547239c60",
     "execution_comparisons.csv": "1a750ace0b5a19f74f1b5cb6b502e20d984c17748241d8dc3bca825a6a612e70",
     "seed_differences.csv": "ecda9ad648cfc48e808f8e411fc5bdfc06485cba25b8f537260f7dc777f77b13",
     "monthly_revenue.csv": "4ad0877acae94e4f920ab10a3ade6d6cc5f66a919918caf5ff601eaf47335369",

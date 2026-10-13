@@ -1,186 +1,138 @@
-# Battery dispatch
+# NEM battery dispatch: how much arbitrage survives imperfect forecasts?
 
-A three-layer revenue model for an energy-only, five-minute NEM battery. It
-measures how much of a battery's theoretical arbitrage revenue survives when
-dispatch has to be decided from a forecast, and whether planning for
-uncertainty recovers any of it:
+A reproducible holdout study of energy arbitrage by a five-minute NEM battery.
+It measures how much of the perfect-foresight arbitrage value a battery keeps
+when it must dispatch from forecasts and bid under the NEM's rules. It also
+asks whether planning for forecast uncertainty improves the realised outcome.
 
-| Layer | What it knows | How it dispatches |
-|---|---|---|
-| **1. Perfect-foresight bound** | every realised price in the period | the whole period as one LP; no feasible dispatch can beat it |
-| **2. Point forecast** | a price forecast published before each decision | re-solves hourly on a 24-hour forecast and bids the next hour |
-| **3. Stochastic** | the same, plus the forecaster's own past errors | re-solves hourly over 10 forecast-error scenarios and bids a shared next hour |
+The asset is a **hypothetical** 100 MW / 200 MWh battery at the Hornsdale
+275 kV connection point in SA1. It is not a model of the Hornsdale Power
+Reserve. Only the connection point and its published loss factors are real.
 
-Layers 2 and 3 run on three forecasters: persistence, a 7-day same-time
-median, and **AEMO's own published forecasts** — P5MIN for the next hour and
-pre-dispatch up to four hours ahead, each used only once AEMO had published
-it. They bid the way a NEM battery does: each five-minute interval of the
-next hour is offered in ten price bands around the value the plan puts on
-stored energy, spread by the forecaster's recent errors, and the bands clear
-against the realised price. Every decision is made from forecasts alone.
+## Result
 
-Beside layer 1 sits the **perfect-forecast policy**: the layer-2 engine fed the
-realised prices. It is the best achievable dispatch at the same hourly cadence,
-so the gap from it to layer 2 is the cost of the forecast alone.
+Twelve untouched months, June 2023 to May 2024, ran under a protocol frozen
+in advance ([PROTOCOL.md](docs/PROTOCOL.md)). Band prices were fixed for each
+trading day at 12:30 the day before, as the NEM requires.
 
-The reference asset is a **hypothetical** 100 MW / 200 MWh battery at the
-Hornsdale 275 kV connection point in SA1; it is not a model of the actual
-Hornsdale Power Reserve. Both reference months, every layer and every audit
-gate run in about 80 seconds on a laptop and are re-run by CI on every push.
-
-For a meter-side dispatch trace, cash revenue is
-
-```text
-sum(dt * RRP * (generation_MLF * discharge - load_MLF * charge))
-- degradation_cost_per_discharged_MWh * discharged_MWh
-```
-
-The asset has 87% round-trip efficiency, split symmetrically between charge and
-discharge, a 5%–95% SOC envelope and a A$25/MWh degradation cost. Every layer
-starts at minimum SOC so unpriced opening inventory is not counted as arbitrage
-revenue, and every layer is settled at realised prices by the same settlement
-function.
-
-## Reference result
-
-Share of the perfect-foresight bound, SA1, degradation A$25/MWh:
-
-| Layer | Nov 2022 (extreme) | Apr 2023 (typical) |
+| Policy | Net revenue | Share of ceiling |
 |---|---:|---:|
-| 1. Perfect-foresight bound | A$3,609,086 = 100% | A$1,715,918 = 100% |
-| Perfect-forecast policy, hourly | 99.99% | 100.0% |
-| 2. Persistence | 30.0% | 40.3% |
-| 2. 7-day median profile | 35.5% | 49.3% |
-| 2. **AEMO forecasts** | **60.9%** | 51.4% |
-| 3. Stochastic, around the profile | 33.3% | 44.6% |
-| 3. **Stochastic, around AEMO** | 55.5% | **54.3%** |
+| Ceiling: the whole year as one LP | A$26.56M | 100% |
+| Oracle: the rolling engine on realised prices | A$22.04M | 83.0% |
+| **Stochastic, around AEMO's forecasts** (5-seed mean) | **A$13.47M** | **50.7%** |
+| **Point forecast, AEMO** | **A$13.45M** | **50.6%** |
+| Point forecast, 7-day profile | A$8.54M | 32.2% |
+| Rule: 2 cheapest / 2 dearest forecast hours, AEMO | A$5.86M | 22.1% |
 
-What it shows:
+- **Forecast quality is most of the story.** AEMO's published forecasts are
+  worth A$4.9M a year over a naive profile.
+- **Optimisation is worth A$7.6M a year** over a cheapest/dearest-hours rule
+  on the same forecast.
+- **Modelling uncertainty did not measurably help.** The stochastic and point
+  AEMO policies are level. The predeclared paired test by trading day is
+  inconclusive: +A$59 a day, with a 95% interval of −A$2,466 to +A$2,091.
+- **Where it gains and loses.** The stochastic policy earns A$309k more in
+  ordinary intervals and gives A$287k back in the year's 120 highest-priced
+  ones. Without those it wins, by A$876 a day. Around the naive profile it
+  loses.
+- **The NEM's day-ahead band prices cost every policy.** Re-pricing bands
+  hourly, which the NEM does not allow, is worth A$1.6M to the AEMO
+  point-forecast policy and A$4.5M even to the oracle.
+- **Scenario-tree extension.** Removing the two-stage model's clairvoyance
+  about scenario futures lowers its planned value by 2–4%. It changes
+  realised revenue by under 2%.
 
-- **The forecast is almost the whole gap.** Hourly re-solving on a 24-hour
-  look-ahead costs A$230 in November and nothing in April when prices are
-  known. Everything below that is the price of not knowing them.
-- **AEMO's forecasts are worth most where prices are wildest.** In November
-  they keep 61% of the maximum against 36% for the naive profile, almost all
-  of the difference earned by selling into the month's 11 intervals above
-  A$5,000. In April, whose prices a 7-day median already tracks, the gain is
-  two points.
-- **Pre-dispatch is only good for a few hours.** Its error a day ahead is
-  larger than the naive profile's, so it is used four hours out and the
-  profile beyond — a cutoff read from these same two months.
-- **Layer 3 adds value once its error history is good.** Around AEMO in
-  April it is the best forecast layer, A$51k above layer 2. In November it
-  is A$193k below, largely because AEMO's archive is missing October 2022,
-  leaving its error history thin until 22 November. Around the naive profile
-  it is A$81k below layer 2 in both months.
-- **Bidding is what makes the extreme month work.** Dispatching planned
-  quantities at whatever price clears instead, the naive forecasts lose money
-  in November by charging through price spikes; bids decline them. Ten price
-  bands and a single price limit are level overall, and committed quantities
-  do best in the calm month. See
-  [RESULTS.md](docs/RESULTS.md#execution-bands-one-limit-or-committed-quantities).
+The question, data, timing, models, results, mechanisms and limitations are
+in the **[research note](docs/RESEARCH_NOTE.md)**. Every table and figure is
+regenerated from its run by one command and is listed, with hashes, in
+[`results/`](results/).
 
-Every decision solved to optimality, every layer sits below its bound, and all
-physical, exclusivity and settlement gates passed. Prices and AEMO forecasts
-for every input month are checked against committed checksums in
-[`data/manifests/`](data/manifests/) before any result is computed. Full
-detail is in [`docs/RESULTS.md`](docs/RESULTS.md).
+![Share of the ceiling by policy and execution](results/test/fig2_share_of_ceiling.png)
 
 ## Scope
 
-The model includes wholesale-energy arbitrage only. FCAS, caps, contracts,
-network support, compensation, availability outages, strategic bidding and
-market impact are excluded: the battery's offers are price-taking limits at
-the plan's value of stored energy, and never move the price. FCAS is therefore exactly 0% of **modelled**
-revenue, not an estimate of its share for a real battery.
+- **Revenue.** Wholesale energy only: no FCAS, contracts or caps. FCAS is
+  therefore 0% of *modelled* revenue, not an estimate of its share for a real
+  battery.
+- **Price taking.** The battery clears its offers against historical
+  regional prices and never moves them. There is no dispatch engine, network
+  constraint or market impact.
+- **One region and year.** SA1 for one test year. The verdict and its
+  interval describe those twelve months, not future revenue.
 
-Two months are not a distribution. November 2022 was chosen as an extreme and
-April 2023 as a typical month of the same financial year; neither result should
-be annualised.
-
-AEMO's forecasts are fetched directly from the MMSDM archive on NEMWeb.
-NEMSEER, the usual client, pins `xarray` below what linopy requires. The
-archive has no every-run pre-dispatch file for October 2022; how that is
-handled is set out in [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md#aemo-forecast-contract).
-
-The complete list of modelling limitations is
-[`docs/RESULTS.md#limitations`](docs/RESULTS.md#limitations). It is maintained
-in one place; this section is a summary, not the full set.
-
-No ramp constraint is imposed because a grid battery can reverse within a
-five-minute interval. A binary mode prevents simultaneous charging and
-discharging in every implemented interval, including at negative prices. A
-non-settled A$0.0001/MWh throughput tie-breaker selects the least-cycling
-schedule among economically equivalent optima.
+The complete list of limitations is
+[RESULTS.md#limitations](docs/RESULTS.md#limitations).
 
 ## Reproduce
 
-Install and run the offline gates:
+Install and run the offline gates. These are lint, 115 tests, a deterministic
+fixture, and fifteen mutation checks, each of which must turn a test red:
 
 ```powershell
-uv sync --extra dev
+uv sync --frozen --extra dev --extra report
+uv run ruff check src tests scripts
 uv run pytest --basetemp .test-tmp
 uv run python scripts/run_fixture.py
 uv run python scripts/run_mutation_checks.py
 ```
 
-Verify the reference inputs, then run the three-layer comparison:
+Re-run the holdout study and regenerate its tables and figures. It takes
+about 25 minutes on 7 worker processes and downloads about 1 GB from NEMWeb
+the first time:
 
 ```powershell
-uv run python scripts/verify_reference.py
-uv run python scripts/run_layers.py
+uv run python scripts/check_coverage.py --first 2023-05 --last 2024-05
+uv run python scripts/run_study.py config/studies/test.toml --jobs 7
+uv run python scripts/make_report.py runs/<run-id> --out results/test
+uv run python scripts/verify_inputs.py results/test/report_manifest.json
 ```
 
-This writes `analysis/layers.csv`, `analysis/layer_gaps.csv` and one interval
-trace per layer and month under `analysis/layer_traces/`, including each
-interval's planned quantities, offer limits, band spread and error-pool size.
-`--execution bid` offers one price limit per direction, `--execution
-committed` dispatches the planned quantities at any price, `--no-error-cap`
-leaves past errors uncapped and `--aemo-predispatch-hours` moves the
-pre-dispatch cutoff (0 for its whole horizon). The optional perfect-foresight endpoint and degradation grid on November 2022 is
-`scripts/run_reference_sensitivities.py`; CI does not run it.
+The runner refuses a test-stage study unless the source tree is clean and
+the protocol matches the hash the study pins. Each run writes
+`runs/<name>-<config hash>/`, which holds:
 
-Run a single perfect-foresight rolling dispatch over any other period through
-the CLI:
+- the resolved configuration;
+- the source commit;
+- the environment;
+- every input month's checksum;
+- every task's audit;
+- the traces.
 
-```powershell
-uv run battery-dispatch `
-  --start "2022-11-01 00:00" `
-  --end "2022-12-01 00:00" `
-  --region SA1 `
-  --connection-point "Hornsdale 275 kV" `
-  --loss-factor-file config/loss_factors.csv `
-  --degradation-cost 25
-```
-
-The price downloader calls NEMOSIS, and the forecast downloader NEMWeb, only
-for missing monthly partitions. Inputs fail closed on gaps, duplicates, intervention rows, unknown
-dated price caps or incomplete MLF provenance.
+The development, validation and scenario-tree suites are
+`scripts/run_experiments.py <suite>` followed by
+`scripts/summarise_suite.py <suite>`. The two development reference months,
+which CI re-runs on every push, are `scripts/verify_reference.py` followed by
+`scripts/run_layers.py`. The GitHub workflow `study.yml` runs the full study
+on demand.
 
 ## Repository map
 
 ```text
-config/               reference asset MLF schedule
-data/manifests/       committed input identity and quality evidence
-docs/                 data contract, validation and results
-src/data.py           NEMOSIS download, partition cache, ingest checks
-src/mlf.py            provenance-preserving annual MLF ingestion
-src/battery.py        SOC physics and feasibility checks
-src/settlement.py     authoritative loss-adjusted settlement calculation
-src/ceiling.py        layer 1: whole-period perfect-foresight bound
-src/aemo_forecasts.py AEMO pre-dispatch and P5MIN archive ingest and cache
-src/forecast.py       forecasters, and the error pool behind scenarios and bands
-src/mpc.py            forecast-driven rolling dispatch on a direct HiGHS model
-src/layers.py         runs, settles and audits every layer for one period
-src/optimiser.py      linopy/HiGHS per-window MILP and exclusivity reduction
-src/horizon.py        perfect-foresight rolling-horizon policy (CLI, sensitivities)
-src/metrics.py        run summary and durable output
-src/validation.py     independent run and cycle audits
-src/sensitivity.py    optional endpoint/degradation scenarios
-scripts/              input verification, layer comparison, fixture, mutations
-tests/                hand-worked, invariant and contract tests
+config/loss_factors.csv  dated, sourced MLFs for the connection point
+config/studies/          declared studies: development, validation, test
+data/manifests/          committed identity of the reference input months
+data/coverage/           input coverage, checked before any policy was run
+docs/RESEARCH_NOTE.md    the study: question, method, results, limitations
+docs/PROTOCOL.md         periods, decision rule and frozen configuration
+docs/RESULTS.md          development reference months and full limitations
+docs/VALIDATION.md       gates, tests and mutation checks
+docs/DATA_CONTRACT.md    input, coverage and output contracts
+docs/BASELINE.md         the reproduced starting point
+results/                 committed tables, figures and manifests per suite
+src/study.py             declared study runner, provenance and slicing
+src/bidding.py           NEM timetable, fixed daily bands, offer execution, rule baseline
+src/mpc.py               forecast-driven rolling dispatch on a direct HiGHS model
+src/scenario_tree.py     scenario-tree bundling and non-anticipative labels
+src/forecast.py          forecasters, latency and error-pool wrappers, error bootstrap
+src/aemo_forecasts.py    AEMO pre-dispatch and P5MIN archive ingest
+src/ceiling.py           whole-period LP ceiling
+src/stats.py             paired block-bootstrap comparison and decision rule
+src/report.py            tables and figures from a run
+src/coverage.py          per-month input coverage
+src/settlement.py        the one settlement function
+src/validation.py        physical, settlement and ceiling audits
+src/data.py, src/mlf.py  price and loss-factor ingest
+src/layers.py            the per-month comparison behind the reference months
+scripts/                 coverage, studies, suites, reports, verification, mutations
+tests/                   hand-worked, invariant, causality and contract tests
 ```
-
-Detailed contracts and evidence are in
-[`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) and
-[`docs/VALIDATION.md`](docs/VALIDATION.md).
