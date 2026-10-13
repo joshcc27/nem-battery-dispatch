@@ -165,3 +165,13 @@ def test_tasks_run_settle_audit_and_slice_on_one_continuous_trace() -> None:
     assert totals["noop__none"] == 0.0
     assert totals["oracle__bands"] == pytest.approx(totals["ceiling__none"], rel=1e-3)
     assert Task("L3_profile", "bands", 7).key in totals
+
+
+def test_protocol_hash_ignores_line_endings(tmp_path: Path) -> None:
+    from battery_dispatch.study import text_sha256
+
+    lf = tmp_path / "lf.md"
+    crlf = tmp_path / "crlf.md"
+    lf.write_bytes(b"# Protocol\nfrozen\n")
+    crlf.write_bytes(b"# Protocol\r\nfrozen\r\n")
+    assert text_sha256(lf) == text_sha256(crlf)

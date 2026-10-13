@@ -180,5 +180,51 @@ The selection rule:
 
 ## 7. Frozen configuration (completed after validation, before test)
 
-To be completed from the validation results before `config/studies/test.toml`
-is written and this file's hash is pinned.
+Written 13 October 2026, after the validation suite and before any test-period
+run.
+
+**Validation evidence.** Thirteen validation runs, on the period in section 2,
+are indexed in
+[`results/validation/summary.md`](../results/validation/summary.md). They
+were run at commits `14dd272` and `d1fa671`, which differ only in reporting
+scripts. Every task in every run passed its audit, and none failed.
+
+**Selection.** The rule in section 6 was applied mechanically by
+`scripts/summarise_suite.py`, and its output is in
+[`results/validation/selection.csv`](../results/validation/selection.csv).
+**No alternative met the rule, so every development default is kept.** The
+largest gains for `L3_aemo` were well short of the 1-point threshold: a
+36-hour horizon added 0.35 points of the ceiling and the 42-day, 20-scenario
+pool 0.79 points. Using pre-dispatch only one hour ahead cost `L2_aemo` 21
+points.
+
+**Frozen settings for the test.**
+
+| Setting | Value |
+|---|---|
+| Degradation | A$25 per discharged MWh |
+| Look-ahead, re-solve cadence | 24 hours, hourly |
+| AEMO forecast | P5MIN, then pre-dispatch up to 4 hours ahead, then the 7-day profile |
+| Error pool | 21 days, capped at its 5th and 95th percentiles |
+| Scenarios | 10, drawn by seeds 101, 202, 303, 404 and 505 |
+| Shared decisions | the committed hour only (the two-stage model) |
+| Rule baseline | 2 cheapest and 2 dearest forecast hours in the next 24 |
+| Bands | 10 per direction. Under `fixed_bands`: 7 quantile bands and a ladder at 5%, 25% and 100% of the way to the market bound, fixed at 12:30 for each 04:00 trading day |
+| Latency | zero for the headline. The test also runs `L2_aemo` and `L3_aemo` at 15 minutes, as declared in section 5 |
+| Executions | `fixed_bands` (headline) and `bands` (comparison) |
+
+These are the defaults of `LayerSettings` and `config/studies/test.toml`. The
+code is whatever commit contains this file. The test run records that commit,
+and the runner refuses a dirty source tree.
+
+**Validation result for the primary comparison, recorded for completeness.**
+Under `fixed_bands` over the validation period, `L3_aemo` − `L2_aemo` was
+−A$2,484 per trading day. The 95% interval ran from −A$8,248 to +A$1,282, so
+the verdict was inconclusive. Without the 24 highest-price intervals it was
+−A$495 per day, also inconclusive. This informed nothing: the decision rule
+and the policy were fixed before it was seen.
+
+**The scenario-information extension** compares the two-stage model with a
+scenario tree. It runs only on the validation period and the development
+months. It does not change the policy tested here. Any policy it suggested
+would need a new untouched period for its own performance claim.

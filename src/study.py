@@ -674,10 +674,20 @@ def input_identity(config: StudyConfig, cache: Path, asset: BatteryConfig) -> di
     }
 
 
+def text_sha256(path: str | Path) -> str:
+    """SHA-256 of a text file with line endings normalised to LF.
+
+    Git may check a text file out with CRLF on Windows and LF elsewhere, so a
+    byte hash would refuse the same protocol on one of them.
+    """
+    data = Path(path).read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
+
+
 def check_protocol(config: StudyConfig, root: Path) -> None:
     if config.protocol is None:
         return
-    actual = file_sha256(root / config.protocol)
+    actual = text_sha256(root / config.protocol)
     if config.protocol_sha256 and actual != config.protocol_sha256:
         raise SystemExit(
             f"{config.protocol} has changed since this study was frozen "

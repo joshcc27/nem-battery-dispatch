@@ -1,0 +1,16 @@
+# Test: twelve consecutive untouched months, run once under the frozen
+# protocol. The runner refuses to run this unless docs/PROTOCOL.md still has
+# the SHA-256 pinned below and the source tree is clean.
+name = "test"
+stage = "test"
+start = "2023-06-01 00:00"
+end = "2024-06-01 00:00"
+policies = ["ceiling", "oracle", "noop", "rule_profile", "rule_aemo",
+            "L2_persistence", "L2_profile", "L2_aemo", "L3_profile", "L3_aemo"]
+executions = ["fixed_bands", "bands"]
+seeds = [101, 202, 303, 404, 505]
+protocol = "docs/PROTOCOL.md"
+protocol_sha256 = ""
+
+[settings]
+deg_cost = 25.0

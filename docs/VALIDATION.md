@@ -41,8 +41,8 @@ Layers 2 and 3 and the perfect-forecast policy (`src/mpc.py`) are audited by
 the same functions as the perfect-foresight run, with one deliberate
 difference:
 
-- **Every layer must stay below the layer-1 bound.** Every forecast-driven
-  dispatch is a feasible point of the bound LP, so the ceiling gate applies
+- **Every layer must stay below the ceiling.** Every forecast-driven
+  dispatch is a feasible point of the ceiling LP, so the ceiling gate applies
   unchanged.
 - **Physics, exclusivity, solver status and MIP gap are gated unchanged.** Only
   the committed hour of each decision is implemented, so only it carries
@@ -51,7 +51,10 @@ difference:
 - **Loss-making cycles are reported, not gated.** A dispatch made on a wrong
   forecast can legitimately discharge below its purchase cost, so
   `assert_audit_passes(require_cycle_break_even=False)` still demands the key
-  but does not fail on it. The perfect-forecast policy keeps the hard gate.
+  but does not fail on it. The oracle keeps the hard gate under every execution
+  that reproduces its plan. Under fixed daily bands it is reported instead:
+  a band price fixed the day before can make even a perfect plan trade at a
+  band rather than at its own limit.
 
 The policies are protected against reading the future by construction and by
 test. Forecasters receive only the array of prices settled before the decision.
@@ -112,6 +115,68 @@ identical scenarios reduce it to the deterministic model, and a hand-worked
 case where the shared committed hour hedges between two scenarios. As an
 end-to-end check, the perfect-forecast policy reproduces the 48-hour/daily
 rolling headline of A$3,608,856.15 to the cent.
+
+### Fixed daily bands
+
+The headline execution fixes ten band prices per direction for each 04:00
+trading day at 12:30 the day before. Every hour it may only move quantity
+between those prices (`src/bidding.py`, rules (a) and (b)).
+`tests/test_bidding.py` checks the following:
+
+- **Trading day.** The interval ending 04:00 belongs to the previous trading
+  day and the one ending 04:05 to the new one. Each day's bands are designed
+  exactly at its deadline.
+- **Band design.** Band prices are strictly increasing inside the market
+  bounds. The laddered outer bands reach the price cap and the floor.
+- **Snapping.** A tranche moves to a band no worse than the price it wanted,
+  or is withheld, and a withheld tranche never clears.
+- **Later prices.** Changing every price after one deadline leaves every band
+  designed by then, and every dispatch up to it, unchanged.
+- **Later forecasts.** Changing every AEMO run published after one deadline
+  leaves every band designed by then unchanged. Changing them does change
+  later bands, so the test is not vacuous.
+- **Clearing.** Under a perfect forecast, energy is only sold at or above the
+  day's lowest discharge band and only bought at or below its highest charge
+  band.
+
+### Decision latency, thinned error history and the scenario tree
+
+- **Latency.** `LaggedForecaster` runs the forecaster from the history as it
+  stood `lag` intervals before the decision. A test pins that a P5MIN run
+  published inside the lag is ignored.
+- **Thinned error history.** `ThinnedErrorHistory` drops error-pool lags
+  before a chosen decision and changes nothing else.
+- **Scenario tree.** The scenario model accepts a decision label per scenario
+  and interval. Its tests check:
+  - two-stage labels reproduce the default model exactly;
+  - a hand-worked case shows that paths diverging late keep their early
+    decisions shared, and plan a lower value than the two-stage model;
+  - bundling yields a tree that shares a decision exactly when the observed
+    histories are equal.
+
+### Solver retry
+
+A warm-started HiGHS instance can report "Unknown" after an extreme price
+scenario. Every solve first retries from a cold start. If the same instance
+still reports "Unknown", a fresh instance is built from the identical model and
+solved once more; only a third failure fails the decision. The third step was
+added after one development run reported "Unknown" at the optimal objective on
+an all-continuous decision, which the fresh instance solved to optimality. A
+regression test drives a stub instance that never succeeds through the
+fallback.
+
+### Study runs
+
+`src/study.py` runs every task of a declared study, settles and audits each,
+and records each audit in the run manifest.
+
+- **Failures.** A failed solve or failed audit fails that task. It is listed
+  in the manifest with its traceback, and the run exits non-zero; nothing
+  falls back to another policy.
+- **Test stage.** A test-stage study refuses to run unless the source tree is
+  clean and `docs/PROTOCOL.md` matches the SHA-256 the study pins.
+- **Input checks.** `scripts/verify_inputs.py` re-derives every input month's
+  checksums from a published manifest.
 
 A gate whose audit key is absent is treated as a **missing check, not a passing
 one**. `assert_audit_passes` asserts every required key is present before
@@ -234,12 +299,24 @@ run of every layer. The deterministic
 CI fixture exercises fetch-independent optimization, settlement, metrics and
 audits end to end.
 
-`scripts/run_mutation_checks.py` deliberately introduces twelve high-risk
-errors: loss-factor removal, charge-efficiency removal, binary relaxation,
-dropping binaries that can bind, skipping the audit-completeness assertion, disabling the ceiling gate,
-settlement sign reversal, degradation sign reversal, wrong intervention
-selection, wrong interval-ending convention, SOC reset and committing the
-look-ahead tail. Each mutation must make its targeted test fail.
+`scripts/run_mutation_checks.py` deliberately introduces fifteen high-risk
+errors, and each must make its targeted test fail:
+
+- loss-factor removal;
+- charge-efficiency removal;
+- binary relaxation;
+- dropping binaries that can bind;
+- skipping the audit-completeness assertion;
+- disabling the ceiling gate;
+- settlement sign reversal;
+- degradation sign reversal;
+- wrong intervention selection;
+- wrong interval-ending convention;
+- SOC reset;
+- committing the look-ahead tail;
+- designing a day's bands an hour after its deadline;
+- snapping a tranche below its wanted price;
+- letting the scenario tree see the not-yet-observed block.
 
 CI runs two jobs. The offline job runs tests with coverage, byte-compiles
 source/tests/scripts, executes the deterministic fixture and runs all mutation

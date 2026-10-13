@@ -82,9 +82,50 @@ Duplicate financial years, inconsistent DUIDs or missing provenance fail at
 load time. A run hash includes the selected asset configuration and the summary
 records the loss-factor file SHA-256.
 
+## Study coverage and inputs
+
+Before any policy is run on a candidate period, `scripts/check_coverage.py`
+writes one row per month to `data/coverage/`. Each row records:
+
+- whether every price interval is present;
+- whether every interval has a configured loss factor and price cap;
+- at what share of five-minute decision times an AEMO pre-dispatch run
+  (60 minutes old at most) and a P5MIN run (15 minutes) were current;
+- the longest gap without one.
+
+The declared exclusion rule is written beside it. Exclusions are decided from
+this file alone, before any revenue is seen.
+
+`config/loss_factors.csv` carries FY2022-23 and FY2023-24 rows for the
+Hornsdale 275 kV connection point (HPRG1/HPRL1). Both come from page 34 of
+AEMO's MLF report for the year. The FY2023-24 column was read from the July
+2024 version of that report. Its previous-year column reproduces the
+committed FY2022-23 values, which confirms the table alignment.
+
+Every study run records, for each month it reads, including warm-up:
+
+- the canonical price checksum;
+- both AEMO forecast tables' row counts and checksums;
+- the loss-factor file's SHA-256.
+
 ## Output contract
 
-A run writes two files. `dispatch_<config_hash>.csv` is the interval-level
+The study runner writes `runs/<name>-<hash>/`, where the hash is of the
+resolved study configuration:
+
+- `manifest.json` holds the configuration, the source commit and tree
+  state, the environment, the input identity, every task's audit and every
+  failure;
+- `summary.csv` has one row per policy, execution and seed;
+- `monthly.csv` and `daily.csv` slice the same continuous traces by calendar
+  month and by trading day;
+- `traces/` holds one settled parquet trace per task, and each fixed-band
+  task's band prices by trading day.
+
+`scripts/make_report.py` turns a run into tables, figures and a
+`report_manifest.json` that hashes every file it wrote.
+
+The single-run CLI below writes two files. `dispatch_<config_hash>.csv` is the interval-level
 trace: one row per five-minute interval with dispatch, SOC, prices, loss
 factors, settlement components and the solver evidence for the window it came
 from. `results.csv` holds one row per run, keyed by `config_hash` and upserted,
