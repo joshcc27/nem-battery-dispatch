@@ -59,7 +59,9 @@ def audit_prices(
         "price_max_timestamp": frame["settlementdate"].max().isoformat(),
         "rrp_min": float(frame["rrp"].min()),
         "rrp_max": float(frame["rrp"].max()),
-        "price_sha256": dataframe_sha256(frame, ["settlementdate", "regionid", "rrp"]),
+        "price_sha256": dataframe_sha256(
+            frame, ["settlementdate", "regionid", "rrp"]
+        ),
     }
 
 
@@ -76,7 +78,8 @@ def audit_dispatch(
     interval_residual = soc - expected_soc
     terminal = float(soc[-1])
     window_statuses = (
-        trace[["window_id", "solver_status", "solver_termination"]].drop_duplicates("window_id")
+        trace[["window_id", "solver_status", "solver_termination"]]
+        .drop_duplicates("window_id")
         if "window_id" in trace
         else pd.DataFrame()
     )
@@ -84,11 +87,15 @@ def audit_dispatch(
         "energy_balance_residual_mwh": energy_balance_residual(
             charge, discharge, soc_initial, terminal, asset
         ),
-        "max_interval_energy_balance_error_mwh": float(np.max(np.abs(interval_residual))),
+        "max_interval_energy_balance_error_mwh": float(
+            np.max(np.abs(interval_residual))
+        ),
         "soc_min_observed_mwh": float(soc.min()),
         "soc_max_observed_mwh": float(soc.max()),
         # min(charge, discharge) in MW, not the product: see validate_dispatch_trace.
-        "max_simultaneous_charge_discharge_mw": float(np.max(np.minimum(charge, discharge))),
+        "max_simultaneous_charge_discharge_mw": float(
+            np.max(np.minimum(charge, discharge))
+        ),
         # The same quantity as a fraction of the power rating, which is what the
         # gate tests so that one tolerance is meaningful at any asset size.
         "max_simultaneous_dispatch_fraction": float(
@@ -131,7 +138,9 @@ def audit_dispatch(
         # Windows whose exclusivity binaries were all proven redundant solve as
         # pure LPs and report a zero gap exactly, not approximately.
         "pure_lp_window_count": (
-            int(trace.groupby("window_id")["exclusivity_binary_count"].first().eq(0).sum())
+            int(
+                trace.groupby("window_id")["exclusivity_binary_count"].first().eq(0).sum()
+            )
             if "exclusivity_binary_count" in trace
             else 0
         ),
@@ -141,7 +150,9 @@ def audit_dispatch(
             else np.nan
         ),
         "solver_non_optimal_window_count": (
-            int((~window_statuses["solver_termination"].str.lower().eq("optimal")).sum())
+            int(
+                (~window_statuses["solver_termination"].str.lower().eq("optimal")).sum()
+            )
             if not window_statuses.empty
             else 0
         ),
@@ -213,7 +224,10 @@ def assert_audit_passes(
         failures.append("non-optimal solver window")
     if float(audit["max_solver_mip_gap"]) > mip_gap_tolerance:
         failures.append("solver MIP gap")
-    if require_cycle_break_even and int(audit["completed_cycle_break_even_violation_count"]) != 0:
+    if (
+        require_cycle_break_even
+        and int(audit["completed_cycle_break_even_violation_count"]) != 0
+    ):
         failures.append("completed-cycle break-even")
     ceiling_tolerance = CEILING_ABSOLUTE_TOLERANCE_AUD + CEILING_RELATIVE_TOLERANCE * abs(
         float(audit["perfect_foresight_ceiling_aud"])
@@ -249,7 +263,9 @@ def audit_completed_cycles(
         if charge_mwh > tolerance:
             stored = charge_mwh * asset.charge_efficiency
             charged_inventory += stored
-            charged_inventory_cost += float(row.load_loss_factor) * float(row.rrp) * charge_mwh
+            charged_inventory_cost += (
+                float(row.load_loss_factor) * float(row.rrp) * charge_mwh
+            )
         if discharge_mwh <= tolerance:
             continue
         stored_used = discharge_mwh / asset.discharge_efficiency
@@ -262,10 +278,8 @@ def audit_completed_cycles(
         cost = average_cost * matched_stored
         matched_fraction = matched_stored / stored_used
         revenue = (
-            (float(row.generation_loss_factor) * float(row.rrp) - deg_cost)
-            * discharge_mwh
-            * matched_fraction
-        )
+            float(row.generation_loss_factor) * float(row.rrp) - deg_cost
+        ) * discharge_mwh * matched_fraction
         margins.append(revenue - cost)
         matched_connection_mwh += discharge_mwh * matched_fraction
         charged_inventory -= matched_stored

@@ -58,7 +58,9 @@ def settlement_coefficients(
             raise ValueError("Timestamp and price lengths differ")
         financial_years = {financial_year(timestamp) for timestamp in timestamps}
         if asset.loss_factor_table is None and len(financial_years) > 1:
-            raise ValueError("A window spanning financial years requires a dated loss-factor table")
+            raise ValueError(
+                "A window spanning financial years requires a dated loss-factor table"
+            )
         factors = [asset.loss_factors_for(timestamp) for timestamp in timestamps]
         generation = np.asarray([factor.generation for factor in factors], dtype=float)
         load = np.asarray([factor.load for factor in factors], dtype=float)
@@ -136,10 +138,14 @@ def settle(
     )
     merged["generation_loss_factor"] = coefficients.generation_loss_factor
     merged["load_loss_factor"] = coefficients.load_loss_factor
-    merged["generation_revenue"] = coefficients.generation_value_per_mw * merged["discharge_mw"]
+    merged["generation_revenue"] = (
+        coefficients.generation_value_per_mw * merged["discharge_mw"]
+    )
     merged["load_cost"] = -coefficients.charge_value_per_mw * merged["charge_mw"]
     merged["energy_revenue"] = merged["generation_revenue"] - merged["load_cost"]
-    merged["degradation_cost"] = coefficients.degradation_cost_per_mw * merged["discharge_mw"]
+    merged["degradation_cost"] = (
+        coefficients.degradation_cost_per_mw * merged["discharge_mw"]
+    )
     merged["total_revenue"] = merged["energy_revenue"] - merged["degradation_cost"]
     energy_revenue = float(merged["energy_revenue"].sum())
     degradation_cost = float(merged["degradation_cost"].sum())
@@ -161,7 +167,9 @@ def break_even_discharge_price(
     """Minimum discharge RRP for a marginal complete cycle."""
     eta_rt = asset.charge_efficiency * asset.discharge_efficiency
     factors = (
-        asset.loss_factors if settlementdate is None else asset.loss_factors_for(settlementdate)
+        asset.loss_factors
+        if settlementdate is None
+        else asset.loss_factors_for(settlementdate)
     )
     energy_term = factors.load * charge_price / (factors.generation * eta_rt)
     return energy_term + deg_cost / factors.generation
