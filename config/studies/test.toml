@@ -10,7 +10,7 @@ policies = ["ceiling", "oracle", "noop", "rule_profile", "rule_aemo",
 executions = ["fixed_bands", "bands"]
 seeds = [101, 202, 303, 404, 505]
 protocol = "docs/PROTOCOL.md"
-protocol_sha256 = ""
+protocol_sha256 = "62bfadfde0b4eddd585f674f536fbe13177e9a4ff380bfebc20277aaa618a3cc"
 
 [settings]
 deg_cost = 25.0
