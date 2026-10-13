@@ -16,7 +16,14 @@ from pathlib import Path
 
 import pandas as pd
 
-from battery_dispatch.report import Run, comparisons, markdown_table, policy_table
+from battery_dispatch.report import (
+    Run,
+    comparisons,
+    daily_revenue,
+    markdown_table,
+    policy_table,
+)
+from battery_dispatch.stats import paired_comparison
 
 MONEY = "{:,.0f}"
 SHARE = "{:.1%}"
@@ -117,6 +124,50 @@ def selection(runs: dict[str, Run]) -> pd.DataFrame:
     return table
 
 
+def extension_table(runs: dict[str, Run]) -> pd.DataFrame:
+    """Each information assumption against the two-stage model on the same bundled paths."""
+    rows = []
+    windows = sorted({name.rsplit("-", 1)[0] for name in runs})
+    for window in windows:
+        reference = runs.get(f"{window}-bundled")
+        if reference is None:
+            continue
+        for variant in ("fan", "tree", "shared", "bundled"):
+            run = runs.get(f"{window}-{variant}")
+            if run is None:
+                continue
+            for policy in ("L3_aemo", "L3_profile"):
+                for execution in ("fixed_bands", "bands"):
+                    tasks = run.tasks(policy, execution)
+                    if not tasks:
+                        continue
+                    traces = [run.trace(task) for task in tasks]
+                    decisions = pd.concat(
+                        [t.drop_duplicates("window_id") for t in traces], ignore_index=True
+                    )
+                    a = daily_revenue(run, policy, execution)
+                    b = daily_revenue(reference, policy, execution)
+                    paired = paired_comparison(a.to_numpy(), b.to_numpy())
+                    rows.append(
+                        {
+                            "window": window.removeprefix("ext-"),
+                            "variant": variant,
+                            "policy": policy,
+                            "execution": execution,
+                            "realised_revenue": float(
+                                sum(t["total_revenue"].sum() for t in traces) / len(traces)
+                            ),
+                            "mean_planned_objective": float(decisions["planned_objective"].mean()),
+                            "mean_solve_seconds": float(decisions["solve_seconds"].mean()),
+                            "difference_vs_bundled_two_stage": paired.total_difference,
+                            "ci_low_per_day": paired.ci_low,
+                            "ci_high_per_day": paired.ci_high,
+                            "verdict_vs_bundled": paired.verdict,
+                        }
+                    )
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("suite", choices=["development", "validation", "extension"])
@@ -191,6 +242,33 @@ def main() -> None:
                     },
                 )
             )
+    if args.suite == "extension":
+        extension = extension_table(runs)
+        extension.to_csv(out / "information_assumption.csv", index=False)
+        lines += [
+            "",
+            "## Information assumption: each variant against the bundled two-stage model",
+            "",
+        ]
+        lines.append(
+            markdown_table(
+                extension,
+                {
+                    "realised_revenue": MONEY,
+                    "mean_planned_objective": MONEY,
+                    "mean_solve_seconds": "{:.3f}",
+                    "difference_vs_bundled_two_stage": MONEY,
+                    "ci_low_per_day": MONEY,
+                    "ci_high_per_day": MONEY,
+                },
+            )
+        )
+        for name in ("tree_decisions_aemo_summary.csv", "tree_decisions_profile_summary.csv"):
+            path = out / name
+            if path.exists():
+                decisions = pd.read_csv(path)
+                lines += ["", f"## Controlled single decisions (`{name}`)", ""]
+                lines.append(markdown_table(decisions))
     if args.suite == "validation":
         chosen = selection(runs)
         chosen.to_csv(out / "selection.csv", index=False)
