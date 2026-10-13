@@ -105,6 +105,27 @@ MUTATIONS = [
         ".iloc[-take:].copy()",
         ["tests/test_horizon_metrics.py::test_rolling_horizon_settlement_metrics_and_outputs"],
     ),
+    (
+        "band design after the deadline",
+        "mpc.py",
+        "pending.append((int(position_of[deadline]) + 1, pd.Timestamp(day)))",
+        "pending.append((int(position_of[deadline]) + 13, pd.Timestamp(day)))",
+        ["tests/test_bidding.py::test_later_prices_cannot_change_a_submitted_band_price"],
+    ),
+    (
+        "band snapping below the wanted price",
+        "bidding.py",
+        'index = np.searchsorted(bands, wanted[ok], side="left")',
+        'index = np.searchsorted(bands, wanted[ok], side="left") - 1',
+        ["tests/test_bidding.py::test_tranches_snap_to_a_band_no_worse_than_wanted_or_are_withheld"],
+    ),
+    (
+        "tree sees the unobserved block",
+        "scenario_tree.py",
+        "_, inverse = np.unique(paths[:, :known], axis=0, return_inverse=True)",
+        "_, inverse = np.unique(paths[:, : known + 1], axis=0, return_inverse=True)",
+        ["tests/test_scenario_tree.py::test_paths_that_diverge_late_keep_their_early_decisions_shared"],
+    ),
 ]
 
 

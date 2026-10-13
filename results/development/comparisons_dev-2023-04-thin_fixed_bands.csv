@@ -1,0 +1,4 @@
+role,comparison,execution,excluded_top_intervals,days,mean_daily_difference,total_difference,ci_low,ci_high,share_of_draws_at_or_below_zero,days_a_ahead,verdict
+primary,L3_aemo - L2_aemo,fixed_bands,0,31,839.1884548839998,26014.842101403996,-1062.6712075800356,2959.4320007227616,0.2167,21,inconclusive
+primary,L3_aemo - L2_aemo,fixed_bands,24,31,1500.611108154765,46518.94435279771,-483.2576647500322,3447.905049228177,0.0734,22,inconclusive
+primary,L3_aemo - L2_aemo,fixed_bands,120,31,1645.3462292736178,51005.733107482156,-68.7219639767166,3354.7772389732677,0.0299,22,inconclusive

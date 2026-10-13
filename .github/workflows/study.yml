@@ -1,0 +1,50 @@
+name: Study
+
+# The full holdout study is reproduced on demand rather than on every push: it
+# reads thirteen months of AEMO prices and forecasts (about 1 GB from NEMWeb)
+# and runs every policy, execution and seed. The quick offline gates and the
+# two reference months stay in ci.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      study:
+        description: Study config to run
+        required: true
+        default: config/studies/test.toml
+      jobs:
+        description: Parallel worker processes
+        required: true
+        default: "4"
+
+jobs:
+  study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install uv
+      - run: uv sync --frozen --extra dev --extra report
+      - uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: study-data-${{ hashFiles(inputs.study) }}
+      - name: Run the study
+        run: uv run python scripts/run_study.py "${{ inputs.study }}" --jobs "${{ inputs.jobs }}"
+      - name: Regenerate tables and figures
+        run: |
+          run=$(ls -td runs/*/ | head -1)
+          uv run python scripts/make_report.py "$run" --out reproduced
+          uv run python scripts/verify_inputs.py reproduced/report_manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: study
+          path: |
+            reproduced/
+            runs/*/manifest.json
+            runs/*/summary.csv
+            runs/*/monthly.csv
+            runs/*/daily.csv
