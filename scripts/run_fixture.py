@@ -24,9 +24,7 @@ def main() -> None:
     end = pd.Timestamp("2023-01-02 00:00", tz=AEST)
     timestamps = pd.date_range(start + pd.Timedelta(minutes=5), end, freq="5min")
     daily = [0.0] * 96 + [100.0] * 96 + [20.0] * 96
-    prices = pd.DataFrame(
-        {"settlementdate": timestamps, "regionid": "SA1", "rrp": daily}
-    )
+    prices = pd.DataFrame({"settlementdate": timestamps, "regionid": "SA1", "rrp": daily})
     asset = BatteryConfig(
         generation_loss_factor=0.9652,
         load_loss_factor=0.9681,

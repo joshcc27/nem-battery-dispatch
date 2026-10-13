@@ -36,8 +36,7 @@ def main(argv: list[str] | None = None) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("study", type=Path)
-    parser.add_argument("--set", dest="overrides", action="append", type=parse_override,
-                        default=[])
+    parser.add_argument("--set", dest="overrides", action="append", type=parse_override, default=[])
     parser.add_argument("--name", help="Override the study name (the run-id prefix)")
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--cache", type=Path, default=Path("data/cache"))

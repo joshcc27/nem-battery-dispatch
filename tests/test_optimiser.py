@@ -33,9 +33,7 @@ def objective_revenue(window, prices, asset, deg_cost=0.0) -> float:
         tz=AEST,
     )
     price_frame = pd.DataFrame({"settlementdate": timestamps, "rrp": prices})
-    return settle(
-        window.to_frame(timestamps), price_frame, asset, deg_cost=deg_cost
-    ).total_revenue
+    return settle(window.to_frame(timestamps), price_frame, asset, deg_cost=deg_cost).total_revenue
 
 
 def test_known_six_interval_solution() -> None:
@@ -54,15 +52,18 @@ def test_energy_balance_soc_bounds_and_negative_price_binary() -> None:
     assert np.all(result.charge_mw * result.discharge_mw <= 1e-8)
     assert np.all(result.soc_mwh >= battery.soc_min_mwh - 1e-7)
     assert np.all(result.soc_mwh <= battery.soc_max_mwh + 1e-7)
-    assert abs(
-        energy_balance_residual(
-            result.charge_mw,
-            result.discharge_mw,
-            result.soc_initial_mwh,
-            result.soc_final_mwh,
-            battery,
+    assert (
+        abs(
+            energy_balance_residual(
+                result.charge_mw,
+                result.discharge_mw,
+                result.soc_initial_mwh,
+                result.soc_final_mwh,
+                battery,
+            )
         )
-    ) < 1e-6
+        < 1e-6
+    )
 
 
 def test_flat_price_does_not_cycle_from_minimum_soc() -> None:
@@ -100,9 +101,7 @@ def test_realised_revenue_is_non_increasing_in_degradation_cost() -> None:
     prices = np.array([10, 12], dtype=float)
     low = solve_window(prices, battery, 0, deg_cost=0)
     high = solve_window(prices, battery, 0, deg_cost=5)
-    assert objective_revenue(high, prices, battery, 5) <= objective_revenue(
-        low, prices, battery, 0
-    )
+    assert objective_revenue(high, prices, battery, 5) <= objective_revenue(low, prices, battery, 0)
     assert high.discharge_mw.sum() <= low.discharge_mw.sum()
 
 

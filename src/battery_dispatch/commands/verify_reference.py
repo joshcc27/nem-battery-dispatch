@@ -40,9 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def verify(
-    manifest_path: Path, cache: MarketDataCache, forecasts: ForecastCache
-) -> list[str]:
+def verify(manifest_path: Path, cache: MarketDataCache, forecasts: ForecastCache) -> list[str]:
     """Print each check for one manifest and return the names that failed."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     period = manifest["period"]
@@ -86,9 +84,7 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(f"No manifests found in {MANIFEST_DIR}")
     cache = MarketDataCache(args.cache)
     forecasts = ForecastCache(args.cache)
-    failed = {
-        path: names for path in manifests if (names := verify(path, cache, forecasts))
-    }
+    failed = {path: names for path in manifests if (names := verify(path, cache, forecasts))}
     if failed:
         raise SystemExit(
             "Reference inputs do not match their committed manifests: "

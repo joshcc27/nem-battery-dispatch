@@ -26,9 +26,7 @@ def test_rolling_horizon_settlement_metrics_and_outputs(tmp_path) -> None:
             "rrp": ([0.0] * 6 + [100.0] * 6 + [10.0] * 6 + [200.0] * 6 + [20.0] * 6),
         }
     )
-    trace = run_rolling_horizon(
-        prices, battery, soc_initial=0, window_hours=12, step_hours=6
-    )
+    trace = run_rolling_horizon(prices, battery, soc_initial=0, window_hours=12, step_hours=6)
     assert len(trace) == len(prices)
     assert trace["settlementdate"].is_unique
     revenue = settle(trace, prices, battery)
@@ -42,5 +40,3 @@ def test_rolling_horizon_settlement_metrics_and_outputs(tmp_path) -> None:
     interval_path, result_path = write_run_outputs(revenue, summary, tmp_path)
     assert interval_path.exists()
     assert result_path.exists()
-
-

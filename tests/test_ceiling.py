@@ -62,7 +62,11 @@ def test_ceiling_values_terminal_soc_on_both_sides() -> None:
     battery = asset()
     frame = prices([10.0, 20.0])
     trace = run_rolling_horizon(
-        frame, battery, soc_initial=0, window_hours=2, step_hours=2,
+        frame,
+        battery,
+        soc_initial=0,
+        window_hours=2,
+        step_hours=2,
         terminal_value_per_mwh=500.0,
     )
     revenue = settle(trace, frame, battery)
@@ -81,6 +85,4 @@ def test_result_above_the_ceiling_fails_the_audit() -> None:
             passing_audit(perfect_foresight_ceiling_aud=1_000.0, horizon_gap_aud=-5.0)
         )
     # Solver-tolerance noise below the ceiling is not a failure.
-    assert_audit_passes(
-        passing_audit(perfect_foresight_ceiling_aud=1_000.0, horizon_gap_aud=-0.5)
-    )
+    assert_audit_passes(passing_audit(perfect_foresight_ceiling_aud=1_000.0, horizon_gap_aud=-0.5))

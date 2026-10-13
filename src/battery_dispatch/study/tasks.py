@@ -355,5 +355,3 @@ def _run_task_safely(config: StudyConfig, task: Task, cache: Path) -> dict[str, 
             "error": f"{type(error).__name__}: {error}",
             "traceback": traceback.format_exc(),
         }
-
-

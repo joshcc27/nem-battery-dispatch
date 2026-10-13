@@ -19,9 +19,7 @@ def test_endpoint_and_degradation_sensitivity() -> None:
     )
     prices = pd.DataFrame(
         {
-            "settlementdate": pd.date_range(
-                "2023-01-01 01:00", periods=4, freq="h", tz=AEST
-            ),
+            "settlementdate": pd.date_range("2023-01-01 01:00", periods=4, freq="h", tz=AEST),
             "rrp": [0.0, 100.0, 0.0, 100.0],
         }
     )
@@ -43,8 +41,7 @@ def test_endpoint_and_degradation_sensitivity() -> None:
     assert minimum["total_revenue"].is_monotonic_decreasing
     assert minimum["equivalent_full_cycles"].is_monotonic_decreasing
     valued = result.loc[
-        (result["endpoint_case"] == "valued_terminal")
-        & (result["degradation_cost_per_mwh"] == 0)
+        (result["endpoint_case"] == "valued_terminal") & (result["degradation_cost_per_mwh"] == 0)
     ].iloc[0]
     assert valued["terminal_soc_mwh"] == 1.0
     assert valued["inventory_value_change"] == 150.0

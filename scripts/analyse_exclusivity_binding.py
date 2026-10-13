@@ -78,15 +78,12 @@ def main() -> None:
         connection_point=schedule.connection_point,
         region=args.region,
     )
-    prices = MarketDataCache(args.cache).fetch_prices(
-        args.start, args.end, [args.region]
-    )
+    prices = MarketDataCache(args.cache).fetch_prices(args.start, args.end, [args.region])
     price = prices["rrp"].astype(float).to_numpy()
     # Interval-ending timestamps: an interval belongs to the trading day of its
     # start, so attribute it to the day of (timestamp - one interval).
     day = (
-        pd.DatetimeIndex(prices["settlementdate"])
-        - pd.Timedelta(minutes=asset.interval_minutes)
+        pd.DatetimeIndex(prices["settlementdate"]) - pd.Timedelta(minutes=asset.interval_minutes)
     ).strftime("%Y-%m-%d")
 
     round_trip = asset.charge_efficiency * asset.discharge_efficiency

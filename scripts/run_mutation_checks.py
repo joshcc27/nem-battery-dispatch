@@ -31,8 +31,8 @@ MUTATIONS = [
     (
         "binary exclusivity",
         "dispatch/optimiser.py",
-        "binary=True, coords=[binding_index], name=\"charge_mode\"",
-        "lower=0.0, upper=1.0, coords=[binding_index], name=\"charge_mode\"",
+        'binary=True, coords=[binding_index], name="charge_mode"',
+        'lower=0.0, upper=1.0, coords=[binding_index], name="charge_mode"',
         ["tests/test_optimiser.py::test_energy_balance_soc_bounds_and_negative_price_binary"],
     ),
     (
@@ -64,8 +64,8 @@ MUTATIONS = [
     (
         "settlement sign",
         "market/settlement.py",
-        "merged[\"energy_revenue\"] = merged[\"generation_revenue\"] - merged[\"load_cost\"]",
-        "merged[\"energy_revenue\"] = merged[\"generation_revenue\"] + merged[\"load_cost\"]",
+        'merged["energy_revenue"] = merged["generation_revenue"] - merged["load_cost"]',
+        'merged["energy_revenue"] = merged["generation_revenue"] + merged["load_cost"]',
         ["tests/test_settlement.py::test_hand_computed_six_interval_settlement"],
     ),
     (
@@ -94,7 +94,7 @@ MUTATIONS = [
     (
         "SOC carry",
         "backtest/horizon.py",
-        "current_soc = float(part[\"soc_mwh\"].iloc[-1])",
+        'current_soc = float(part["soc_mwh"].iloc[-1])',
         "current_soc = asset.initial_soc_mwh",
         ["tests/test_horizon_metrics.py::test_rolling_horizon_settlement_metrics_and_outputs"],
     ),
@@ -117,14 +117,18 @@ MUTATIONS = [
         "dispatch/bidding.py",
         'index = np.searchsorted(bands, wanted[ok], side="left")',
         'index = np.searchsorted(bands, wanted[ok], side="left") - 1',
-        ["tests/test_bidding.py::test_tranches_snap_to_a_band_no_worse_than_wanted_or_are_withheld"],
+        [
+            "tests/test_bidding.py::test_tranches_snap_to_a_band_no_worse_than_wanted_or_are_withheld"
+        ],
     ),
     (
         "tree sees the unobserved block",
         "dispatch/scenario_tree.py",
         "_, inverse = np.unique(paths[:, :known], axis=0, return_inverse=True)",
         "_, inverse = np.unique(paths[:, : known + 1], axis=0, return_inverse=True)",
-        ["tests/test_scenario_tree.py::test_paths_that_diverge_late_keep_their_early_decisions_shared"],
+        [
+            "tests/test_scenario_tree.py::test_paths_that_diverge_late_keep_their_early_decisions_shared"
+        ],
     ),
 ]
 

@@ -155,9 +155,7 @@ def test_history_must_join_the_period() -> None:
     battery = hourly_asset()
     frame = hourly_prices(np.zeros(48))
     with pytest.raises(ValueError, match="one interval before"):
-        run_forecast_policy(
-            frame.iloc[30:], frame.iloc[:24], battery, SameTimeProfile(1, 24)
-        )
+        run_forecast_policy(frame.iloc[30:], frame.iloc[:24], battery, SameTimeProfile(1, 24))
 
 
 def test_stored_energy_value_is_the_next_best_sale() -> None:
@@ -213,9 +211,7 @@ def test_offers_respect_soc_headroom_across_the_block() -> None:
 
 def test_bid_execution_of_a_perfect_forecast_is_the_plan() -> None:
     """At the forecast prices the offers are the plan's own optimality conditions."""
-    battery = BatteryConfig(
-        generation_loss_factor=0.97, load_loss_factor=0.99, interval_minutes=60
-    )
+    battery = BatteryConfig(generation_loss_factor=0.97, load_loss_factor=0.99, interval_minutes=60)
     rng = np.random.default_rng(12)
     # Prices below -169 make burning energy pay at A$25/MWh, so binaries bind.
     values = np.tile([30.0, -300.0, -40.0, 20.0, 180.0, 90.0] * 4, 6) + rng.normal(0, 40, 144)
@@ -259,9 +255,7 @@ def test_offers_keep_a_planned_idle_interval_idle_where_burning_pays() -> None:
 def test_forecasts_are_clipped_to_each_intervals_own_price_cap() -> None:
     """The interval ending 1 July 00:00 still carries the old year's cap."""
     unit = LossFactors(1.0, 1.0, "test")
-    battery = hourly_asset(
-        loss_factor_table=LossFactorTable({"2022-23": unit, "2023-24": unit})
-    )
+    battery = hourly_asset(loss_factor_table=LossFactorTable({"2022-23": unit, "2023-24": unit}))
     timestamps = pd.date_range("2023-06-20 01:00", periods=24 * 14, freq="h", tz=AEST)
     frame = pd.DataFrame({"settlementdate": timestamps, "rrp": np.full(len(timestamps), 16_000.0)})
     prices, history = split(frame, 24 * 7)
@@ -279,8 +273,16 @@ def test_bands_clear_progressively_as_the_price_passes_their_limits() -> None:
 
     def run(price: float) -> tuple[float, float]:
         charge, discharge = execute_offers(
-            np.array([price]), np.zeros(1), np.zeros(1), np.array([60.0]),
-            np.ones(1), np.ones(1), 5.0, battery, throughput_tie_breaker=0.0, **kwargs,
+            np.array([price]),
+            np.zeros(1),
+            np.zeros(1),
+            np.array([60.0]),
+            np.ones(1),
+            np.ones(1),
+            5.0,
+            battery,
+            throughput_tie_breaker=0.0,
+            **kwargs,
         )
         return float(charge[0]), float(discharge[0])
 
@@ -295,9 +297,7 @@ def test_bands_clear_progressively_as_the_price_passes_their_limits() -> None:
 
 def test_band_execution_of_a_perfect_forecast_is_the_plan() -> None:
     """A perfect forecast has no errors, so every band sits at the plan's limit."""
-    battery = BatteryConfig(
-        generation_loss_factor=0.97, load_loss_factor=0.99, interval_minutes=60
-    )
+    battery = BatteryConfig(generation_loss_factor=0.97, load_loss_factor=0.99, interval_minutes=60)
     rng = np.random.default_rng(12)
     values = np.tile([30.0, -300.0, -40.0, 20.0, 180.0, 90.0] * 4, 8) + rng.normal(0, 40, 192)
     frame = hourly_prices(values)

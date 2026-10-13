@@ -187,5 +187,3 @@ def tasks_for(config: StudyConfig) -> list[Task]:
             seeds = config.seeds if spec.stochastic else (None,)
             tasks.extend(Task(policy, execution, seed) for seed in seeds)
     return tasks
-
-

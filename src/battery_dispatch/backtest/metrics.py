@@ -28,9 +28,7 @@ def summarise_run(
     charge_mwh = float(data["charge_mwh"].sum())
     discharge_mwh = float(data["discharge_mwh"].sum())
     charge_price = (
-        float(np.average(data["rrp"], weights=data["charge_mwh"]))
-        if charge_mwh > 0
-        else np.nan
+        float(np.average(data["rrp"], weights=data["charge_mwh"])) if charge_mwh > 0 else np.nan
     )
     discharge_price = (
         float(np.average(data["rrp"], weights=data["discharge_mwh"]))

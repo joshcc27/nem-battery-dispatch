@@ -34,8 +34,7 @@ def soc_path(
     if charge.shape != discharge.shape:
         raise ValueError("Charge and discharge arrays must have the same shape")
     changes = asset.interval_hours * (
-        asset.charge_efficiency * charge
-        - discharge / asset.discharge_efficiency
+        asset.charge_efficiency * charge - discharge / asset.discharge_efficiency
     )
     return soc_initial + np.cumsum(changes)
 
@@ -51,8 +50,7 @@ def energy_balance_residual(
     charge = np.asarray(charge_mw, dtype=float)
     discharge = np.asarray(discharge_mw, dtype=float)
     physical_change = asset.interval_hours * (
-        asset.charge_efficiency * charge.sum()
-        - discharge.sum() / asset.discharge_efficiency
+        asset.charge_efficiency * charge.sum() - discharge.sum() / asset.discharge_efficiency
     )
     return float(physical_change - (soc_final - soc_initial))
 
@@ -86,14 +84,10 @@ def validate_dispatch_trace(
     # carries units of MW^2, so its sensitivity scales with the square of the
     # power rating and the same solver slack that passes on a 1 MW test asset
     # fails on a 100 MW one.
-    exclusivity_tolerance = max(
-        tolerance, asset.power_mw * SOLVER_INTEGRALITY_TOLERANCE
-    )
+    exclusivity_tolerance = max(tolerance, asset.power_mw * SOLVER_INTEGRALITY_TOLERANCE)
     if np.any(np.minimum(charge, discharge) > exclusivity_tolerance):
         raise ValueError("Simultaneous charging and discharging detected")
-    if np.any(soc < asset.soc_min_mwh - tolerance) or np.any(
-        soc > asset.soc_max_mwh + tolerance
-    ):
+    if np.any(soc < asset.soc_min_mwh - tolerance) or np.any(soc > asset.soc_max_mwh + tolerance):
         raise ValueError("SOC is outside the configured operating envelope")
     if soc_initial is not None:
         expected = soc_path(charge, discharge, soc_initial, asset)

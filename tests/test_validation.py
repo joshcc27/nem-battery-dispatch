@@ -53,9 +53,7 @@ def test_price_and_dispatch_audits() -> None:
             "rrp": [0.0, 100.0, 0.0, 100.0],
         }
     )
-    trace = run_rolling_horizon(
-        prices, asset(), soc_initial=0, window_hours=1, step_hours=1
-    )
+    trace = run_rolling_horizon(prices, asset(), soc_initial=0, window_hours=1, step_hours=1)
     revenue = settle(trace, prices, asset())
     audit = {
         **audit_prices(
@@ -122,9 +120,7 @@ def test_completed_cycle_audit_rejects_loss_making_cycle() -> None:
         }
     )
     revenue = settle(trace, prices, battery)
-    audit = audit_completed_cycles(
-        revenue.intervals, battery, deg_cost=0, initial_soc_mwh=0
-    )
+    audit = audit_completed_cycles(revenue.intervals, battery, deg_cost=0, initial_soc_mwh=0)
     assert audit["completed_cycle_break_even_violation_count"] == 1
     with pytest.raises(ValueError, match="break-even"):
         assert_audit_passes(passing_audit(**audit))

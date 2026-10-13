@@ -75,14 +75,22 @@ def test_cli_writes_audited_outputs_with_a_loss_factor_file(
     run_cli(
         monkeypatch,
         [
-            "--start", START,
-            "--end", END,
-            "--region", "SA1",
-            "--connection-point", "Hornsdale 275 kV",
-            "--loss-factor-file", MLF_FILE,
-            "--degradation-cost", "25",
-            "--cache", str(cached_prices),
-            "--output", str(output),
+            "--start",
+            START,
+            "--end",
+            END,
+            "--region",
+            "SA1",
+            "--connection-point",
+            "Hornsdale 275 kV",
+            "--loss-factor-file",
+            MLF_FILE,
+            "--degradation-cost",
+            "25",
+            "--cache",
+            str(cached_prices),
+            "--output",
+            str(output),
         ],
     )
     assert "Wrote" in capsys.readouterr().out
@@ -104,15 +112,24 @@ def test_cli_accepts_scalar_loss_factors(tmp_path, monkeypatch, cached_prices) -
     run_cli(
         monkeypatch,
         [
-            "--start", START,
-            "--end", END,
-            "--region", "SA1",
-            "--connection-point", "Hornsdale 275 kV",
-            "--generation-mlf", "0.9652",
-            "--load-mlf", "0.9681",
-            "--mlf-source", "test fixture",
-            "--cache", str(cached_prices),
-            "--output", str(output),
+            "--start",
+            START,
+            "--end",
+            END,
+            "--region",
+            "SA1",
+            "--connection-point",
+            "Hornsdale 275 kV",
+            "--generation-mlf",
+            "0.9652",
+            "--load-mlf",
+            "0.9681",
+            "--mlf-source",
+            "test fixture",
+            "--cache",
+            str(cached_prices),
+            "--output",
+            str(output),
         ],
     )
     assert (output / "results.csv").exists()
@@ -121,10 +138,14 @@ def test_cli_accepts_scalar_loss_factors(tmp_path, monkeypatch, cached_prices) -
 def test_scalar_and_file_loss_factor_modes_are_mutually_exclusive() -> None:
     args = cli.build_parser().parse_args(
         [
-            "--start", START,
-            "--end", END,
-            "--loss-factor-file", MLF_FILE,
-            "--generation-mlf", "0.9652",
+            "--start",
+            START,
+            "--end",
+            END,
+            "--loss-factor-file",
+            MLF_FILE,
+            "--generation-mlf",
+            "0.9652",
         ]
     )
     with pytest.raises(ValueError, match="cannot be combined"):
@@ -153,13 +174,20 @@ def test_cli_refuses_to_write_a_run_that_fails_its_audit(
         run_cli(
             monkeypatch,
             [
-                "--start", START,
-                "--end", END,
-                "--region", "SA1",
-                "--connection-point", "Hornsdale 275 kV",
-                "--loss-factor-file", MLF_FILE,
-                "--cache", str(cached_prices),
-                "--output", str(output),
+                "--start",
+                START,
+                "--end",
+                END,
+                "--region",
+                "SA1",
+                "--connection-point",
+                "Hornsdale 275 kV",
+                "--loss-factor-file",
+                MLF_FILE,
+                "--cache",
+                str(cached_prices),
+                "--output",
+                str(output),
             ],
         )
     assert not output.exists()

@@ -34,8 +34,8 @@ def test_mask_matches_the_documented_price_threshold() -> None:
     asset = make_asset()
     deg_cost = 25.0
     eta_rt = asset.charge_efficiency * asset.discharge_efficiency
-    threshold = -deg_cost * eta_rt / (
-        asset.load_loss_factor - asset.generation_loss_factor * eta_rt
+    threshold = (
+        -deg_cost * eta_rt / (asset.load_loss_factor - asset.generation_loss_factor * eta_rt)
     )
     assert threshold == pytest.approx(-169.42, abs=0.01)
 
@@ -57,9 +57,7 @@ def _solve_with_all_binaries(prices, asset, soc_initial, deg_cost, monkeypatch):
     """Solve with the original formulation: one binary on every interval."""
     monkeypatch.setattr(
         "battery_dispatch.dispatch.optimiser.exclusivity_binding_mask",
-        lambda cashflows, asset, **kwargs: np.ones(
-            len(cashflows.charge_value_per_mw), dtype=bool
-        ),
+        lambda cashflows, asset, **kwargs: np.ones(len(cashflows.charge_value_per_mw), dtype=bool),
     )
     return solve_window(prices, asset, soc_initial, deg_cost=deg_cost)
 

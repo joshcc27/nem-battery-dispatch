@@ -28,9 +28,7 @@ def write_schedule(path: Path, **changes: str) -> None:
 def test_loads_provenance_complete_schedule(tmp_path: Path) -> None:
     path = tmp_path / "mlf.csv"
     write_schedule(path)
-    schedule = load_loss_factor_schedule(
-        path, region="SA1", connection_point="Hornsdale 275 kV"
-    )
+    schedule = load_loss_factor_schedule(path, region="SA1", connection_point="Hornsdale 275 kV")
     factors = schedule.table.for_financial_year("2022-23")
     assert factors.generation == pytest.approx(0.9652)
     assert factors.load == pytest.approx(0.9681)

@@ -42,8 +42,11 @@ def main(argv: list[str] | None = None) -> None:
         first = pd.Timestamp(month["month"])
         last = first + pd.offsets.MonthBegin(1)
         frame = prices.fetch_prices(first, last, [args.region])
-        audit = audit_prices(frame, expected_start=pd.Timestamp(first, tz=AEST),
-                             expected_end=pd.Timestamp(last, tz=AEST))
+        audit = audit_prices(
+            frame,
+            expected_start=pd.Timestamp(first, tz=AEST),
+            expected_end=pd.Timestamp(last, tz=AEST),
+        )
         checks = {"price_sha256": audit["price_sha256"], "price_rows": audit["price_row_count"]}
         for table in TABLES:
             identity = forecast_identity(forecasts.month(table, args.region, first))

@@ -117,9 +117,7 @@ def test_rolling_horizon_records_the_policy_it_was_given() -> None:
         assert column in trace
     audit = audit_dispatch(trace, battery, soc_initial=0.0)
     assert audit["total_solver_absolute_gap_aud"] >= 0.0
-    assert_audit_passes(
-        {**passing_audit(), **audit}, mip_gap_tolerance=1e-3
-    )
+    assert_audit_passes({**passing_audit(), **audit}, mip_gap_tolerance=1e-3)
 
 
 def test_a_stuck_warm_start_is_solved_by_a_fresh_instance() -> None:

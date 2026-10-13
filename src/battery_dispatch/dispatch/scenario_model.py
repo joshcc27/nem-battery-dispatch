@@ -340,5 +340,3 @@ class ScenarioDispatchModel:
             planned_mode=planned_mode,
             stored_energy_path=stored_energy_path,
         )
-
-

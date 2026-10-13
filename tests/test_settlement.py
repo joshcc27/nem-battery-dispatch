@@ -46,9 +46,7 @@ def test_hand_computed_six_interval_settlement() -> None:
             "soc_mwh": [1, 1, 0, 0, 0, 0],
         }
     )
-    prices = pd.DataFrame(
-        {"settlementdate": timestamps, "rrp": [10, 20, 100, 30, 20, 10]}
-    )
+    prices = pd.DataFrame({"settlementdate": timestamps, "rrp": [10, 20, 100, 30, 20, 10]})
     result = settle(trace, prices, asset(), deg_cost=2)
     assert result.energy_revenue == pytest.approx(0.98 * 100 - 1.02 * 10)
     assert result.degradation_cost == pytest.approx(2)

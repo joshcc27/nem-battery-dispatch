@@ -73,6 +73,7 @@ and fifteen mutation checks, each of which must turn a test red.
 ```powershell
 uv sync --frozen --extra dev --extra report
 uv run ruff check src tests scripts
+uv run ruff format --check src tests scripts
 uv run pytest --basetemp .test-tmp
 uv run python scripts/run_fixture.py
 uv run python scripts/run_mutation_checks.py

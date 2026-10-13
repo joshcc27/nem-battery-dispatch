@@ -117,9 +117,7 @@ def exclusivity_binding_mask(
     See docs/VALIDATION.md.
     """
     eta_rt = asset.charge_efficiency * asset.discharge_efficiency
-    burn_value = (
-        cashflows.charge_value_per_mw + eta_rt * cashflows.discharge_value_per_mw
-    )
+    burn_value = cashflows.charge_value_per_mw + eta_rt * cashflows.discharge_value_per_mw
     return np.asarray(burn_value >= -margin)
 
 
@@ -195,9 +193,7 @@ def solve_window(
     binding_positions = np.flatnonzero(binding)
     if len(binding_positions):
         binding_index = pd.Index(binding_positions, name="interval")
-        mode = model.add_variables(
-            binary=True, coords=[binding_index], name="charge_mode"
-        )
+        mode = model.add_variables(binary=True, coords=[binding_index], name="charge_mode")
         model.add_constraints(
             charge.sel(interval=binding_index) <= asset.power_mw * mode,
             name="charge_mode_limit",
@@ -224,9 +220,7 @@ def solve_window(
     objective = (
         cashflows.discharge_value_per_mw * discharge
         + cashflows.charge_value_per_mw * charge
-        - asset.interval_hours
-        * throughput_tie_breaker
-        * (charge + discharge)
+        - asset.interval_hours * throughput_tie_breaker * (charge + discharge)
     ).sum() + terminal_value_per_mwh * soc.sel(interval=intervals[-1])
     model.add_objective(objective, sense="max")
     solver_options: dict[str, object] = {
@@ -303,4 +297,3 @@ def solve_window(
         solver_absolute_gap=solver_absolute_gap,
         exclusivity_binary_count=int(len(binding_positions)),
     )
-
