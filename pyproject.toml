@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "battery-dispatch"
-version = "1.0.0"
+version = "1.1.0"
 description = "How much NEM battery arbitrage survives imperfect forecasts: a reproducible holdout study"
 readme = "README.md"
 requires-python = ">=3.11"

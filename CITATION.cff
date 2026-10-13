@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this study or its code, please cite it as below."
+title: "NEM battery dispatch: how much arbitrage survives imperfect forecasts?"
+abstract: >-
+  A reproducible holdout study of five-minute energy arbitrage by a
+  hypothetical 100 MW / 200 MWh battery in South Australia, June 2023 to
+  May 2024. It compares a perfect-foresight ceiling, an oracle, rule-based,
+  point-forecast and stochastic policies on AEMO's published forecasts, under
+  the NEM's fixed daily band prices, with a protocol frozen before the test.
+authors:
+  - family-names: Cox
+    given-names: Joshua
+version: 1.1.0
+date-released: 2026-10-13
+license: MIT
+repository-code: "https://github.com/joshcc27/nem-battery-dispatch"
+keywords:
+  - National Electricity Market
+  - battery storage
+  - energy arbitrage
+  - stochastic optimisation
+  - forecasting
+  - backtesting
