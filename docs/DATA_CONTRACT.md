@@ -36,14 +36,14 @@ One committed manifest per input month, in
 their two warm-up months. Each records source, exact boundaries, partition row
 counts, quality checks, the rationale for the period, and canonical checksums
 of its prices and of its AEMO forecasts, without committing the market-data
-files themselves. `scripts/verify_reference.py` re-derives every one of those
+files themselves. `battery-dispatch verify-reference` re-derives every one of those
 values from a fresh fetch and fails if any differs, so the manifest is an
 enforced contract rather than a description.
 
 ## AEMO forecast contract
 
 The AEMO forecast layers read two MMSDM archive tables, fetched directly from
-NEMWeb by `src/aemo_forecasts.py`:
+NEMWeb by `src/battery_dispatch/market/aemo_forecasts.py`:
 
 | Table | Archive folder | Runs | Each run forecasts |
 |---|---|---|---|
@@ -71,7 +71,7 @@ stored as an empty partition and pinned in
 [`data/manifests/sa1_2022-10.json`](../data/manifests/sa1_2022-10.json) with a
 zero row count, so a later back-fill of the archive is detected rather than
 silently changing results. Its consequences are set out in
-[RESULTS.md](RESULTS.md#forecast-driven-layers).
+[LIMITATIONS.md](LIMITATIONS.md#forecast-driven-policies).
 
 ## Loss-factor contract
 
@@ -84,7 +84,7 @@ records the loss-factor file SHA-256.
 
 ## Study coverage and inputs
 
-Before any policy is run on a candidate period, `scripts/check_coverage.py`
+Before any policy is run on a candidate period, `battery-dispatch coverage`
 writes one row per month to `data/coverage/`. Each row records:
 
 - whether every price interval is present;
@@ -110,7 +110,7 @@ Every study run records, for each month it reads, including warm-up:
 
 ## Output contract
 
-The study runner writes `runs/<name>-<hash>/`, where the hash is of the
+The study runner writes `artifacts/runs/<name>-<hash>/`, where the hash is of the
 resolved study configuration:
 
 - `manifest.json` holds the configuration, the source commit and tree
@@ -122,7 +122,7 @@ resolved study configuration:
 - `traces/` holds one settled parquet trace per task, and each fixed-band
   task's band prices by trading day.
 
-`scripts/make_report.py` turns a run into tables, figures and a
+`battery-dispatch report` turns a run into tables, figures and a
 `report_manifest.json` that hashes every file it wrote.
 
 The single-run CLI below writes two files. `dispatch_<config_hash>.csv` is the interval-level
@@ -139,4 +139,4 @@ residuals, the exclusivity fraction, solver status, gaps and bounds per run,
 completed-cycle evidence, the SOC decile distribution, and the price-audit
 counts and checksum. Keeping them on one row means a stored result can be
 re-checked without re-running it, and without joining two files. Read
-`docs/RESULTS.md` for the figures that are meant to be quoted.
+`docs/RESEARCH_NOTE.md` for the figures that are meant to be quoted.

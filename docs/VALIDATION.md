@@ -19,7 +19,7 @@ Failures raise an exception before output is written.
 
 ## Perfect-foresight ceiling
 
-`src/ceiling.py` solves the entire period as one LP: same asset, prices, dated
+`src/battery_dispatch/dispatch/ceiling.py` solves the entire period as one LP: same asset, prices, dated
 loss factors, starting SOC and terminal valuation, but no rolling horizon, no
 exclusivity binary and no throughput tie-breaker. Every rolling dispatch is a
 feasible point of that LP, so the LP optimum bounds it from above, and the
@@ -37,7 +37,7 @@ the branch-and-bound a harder search, not an easier one.
 
 ## Forecast-driven layers
 
-Layers 2 and 3 and the perfect-forecast policy (`src/mpc.py`) are audited by
+Layers 2 and 3 and the perfect-forecast policy (`src/battery_dispatch/dispatch/rolling.py`) are audited by
 the same functions as the perfect-foresight run, with one deliberate
 difference:
 
@@ -120,7 +120,7 @@ rolling headline of A$3,608,856.15 to the cent.
 
 The headline execution fixes ten band prices per direction for each 04:00
 trading day at 12:30 the day before. Every hour it may only move quantity
-between those prices (`src/bidding.py`, rules (a) and (b)).
+between those prices (`src/battery_dispatch/dispatch/bidding.py`, rules (a) and (b)).
 `tests/test_bidding.py` checks the following:
 
 - **Trading day.** The interval ending 04:00 belongs to the previous trading
@@ -167,7 +167,7 @@ fallback.
 
 ### Study runs
 
-`src/study.py` runs every task of a declared study, settles and audits each,
+`src/battery_dispatch/study/` runs every task of a declared study, settles and audits each,
 and records each audit in the run manifest.
 
 - **Failures.** A failed solve or failed audit fails that task. It is listed
@@ -175,7 +175,7 @@ and records each audit in the run manifest.
   falls back to another policy.
 - **Test stage.** A test-stage study refuses to run unless the source tree is
   clean and `docs/PROTOCOL.md` matches the SHA-256 the study pins.
-- **Input checks.** `scripts/verify_inputs.py` re-derives every input month's
+- **Input checks.** `battery-dispatch verify-inputs` re-derives every input month's
   checksums from a published manifest.
 
 A gate whose audit key is absent is treated as a **missing check, not a passing
@@ -243,7 +243,7 @@ is redundant rather than merely slack. The argument is purely local, because the
 perturbation leaves the entire SOC path unchanged, so no global quantity such as
 the shadow value of stored energy can rescue a locally dominated burn.
 
-`exclusivity_binding_mask` in `src/optimiser.py` therefore evaluates the
+`exclusivity_binding_mask` in `src/battery_dispatch/dispatch/optimiser.py` therefore evaluates the
 bracket `A_c + eta_rt * A_d` per interval and creates a binary only where it is
 non-negative. The bracket is evaluated directly rather than through the
 rearranged price threshold, so dated loss factors and an adverse sign of
@@ -321,8 +321,8 @@ errors, and each must make its targeted test fail:
 CI runs two jobs. The offline job runs tests with coverage, byte-compiles
 source/tests/scripts, executes the deterministic fixture and runs all mutation
 checks. The reference job downloads real AEMO data, verifies it against the
-committed manifest checksums with `scripts/verify_reference.py` — both
+committed manifest checksums with `battery-dispatch verify-reference` — both
 reference months and both warm-up months — and re-runs the three-layer
-comparison with `scripts/run_layers.py`. Because that takes about 80 seconds,
+comparison with `battery-dispatch reference`. Because that takes about 80 seconds,
 the published result is continuously verified rather than quoted from a run
 nobody can afford to repeat.

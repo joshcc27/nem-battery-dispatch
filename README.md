@@ -1,5 +1,7 @@
 # NEM battery dispatch: how much arbitrage survives imperfect forecasts?
 
+[![CI](https://github.com/joshcc27/nem-battery-dispatch/actions/workflows/ci.yml/badge.svg)](https://github.com/joshcc27/nem-battery-dispatch/actions/workflows/ci.yml)
+
 A reproducible holdout study of energy arbitrage by a five-minute NEM battery.
 It measures how much of the perfect-foresight arbitrage value a battery keeps
 when it must dispatch from forecasts and bid under the NEM's rules. It also
@@ -61,12 +63,12 @@ regenerated from its run by one command and is listed, with hashes, in
   interval describe those twelve months, not future revenue.
 
 The complete list of limitations is
-[RESULTS.md#limitations](docs/RESULTS.md#limitations).
+[LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ## Reproduce
 
-Install and run the offline gates. These are lint, 115 tests, a deterministic
-fixture, and fifteen mutation checks, each of which must turn a test red:
+Install and run the offline gates: lint, 116 tests, a deterministic fixture,
+and fifteen mutation checks, each of which must turn a test red.
 
 ```powershell
 uv sync --frozen --extra dev --extra report
@@ -77,62 +79,59 @@ uv run python scripts/run_mutation_checks.py
 ```
 
 Re-run the holdout study and regenerate its tables and figures. It takes
-about 25 minutes on 7 worker processes and downloads about 1 GB from NEMWeb
-the first time:
+about 25 minutes on 7 worker processes, and the first run downloads about
+1 GB from NEMWeb.
 
 ```powershell
-uv run python scripts/check_coverage.py --first 2023-05 --last 2024-05
-uv run python scripts/run_study.py config/studies/test.toml --jobs 7
-uv run python scripts/make_report.py runs/<run-id> --out results/test
-uv run python scripts/verify_inputs.py results/test/report_manifest.json
+uv run battery-dispatch coverage --first 2023-05 --last 2024-05
+uv run battery-dispatch study config/studies/test.toml --jobs 7
+uv run battery-dispatch report artifacts/runs/<run-id> --out results/test
+uv run battery-dispatch verify-inputs results/test/report_manifest.json
 ```
 
 The runner refuses a test-stage study unless the source tree is clean and
 the protocol matches the hash the study pins. Each run writes
-`runs/<name>-<config hash>/`, which holds:
+`artifacts/runs/<name>-<config hash>/`. That folder holds the resolved
+configuration, the source commit, the environment, every input month's
+checksum, every task's audit and the traces. Everything under `artifacts/` is
+regenerable and is not committed.
 
-- the resolved configuration;
-- the source commit;
-- the environment;
-- every input month's checksum;
-- every task's audit;
-- the traces.
+Every step of the workflow is one subcommand; `uv run battery-dispatch --help`
+lists them.
 
-The development, validation and scenario-tree suites are
-`scripts/run_experiments.py <suite>` followed by
-`scripts/summarise_suite.py <suite>`. The two development reference months,
-which CI re-runs on every push, are `scripts/verify_reference.py` followed by
-`scripts/run_layers.py`. The GitHub workflow `study.yml` runs the full study
-on demand.
+| Command | Does |
+|---|---|
+| `coverage` | checks a candidate period's inputs before any run |
+| `study` | runs a declared study from `config/studies/` |
+| `experiments` | runs a suite: `development`, `validation` or `extension` |
+| `summarise` | tabulates a suite and applies the validation selection rule |
+| `tree-decisions` | compares the two-stage model and the tree from identical states |
+| `report` | regenerates a study's tables and figures from its run |
+| `verify-inputs` | re-derives a published result's input checksums |
+| `verify-reference`, `reference` | the two development months that CI re-runs on every push |
+| `backtest` | runs one perfect-foresight rolling backtest over any period |
+
+The GitHub workflow `study.yml` runs the full study on demand.
 
 ## Repository map
 
 ```text
-config/loss_factors.csv  dated, sourced MLFs for the connection point
-config/studies/          declared studies: development, validation, test
-data/manifests/          committed identity of the reference input months
-data/coverage/           input coverage, checked before any policy was run
-docs/RESEARCH_NOTE.md    the study: question, method, results, limitations
-docs/PROTOCOL.md         periods, decision rule and frozen configuration
-docs/RESULTS.md          development reference months and full limitations
-docs/VALIDATION.md       gates, tests and mutation checks
-docs/DATA_CONTRACT.md    input, coverage and output contracts
-docs/BASELINE.md         the reproduced starting point
-results/                 committed tables, figures and manifests per suite
-src/study.py             declared study runner, provenance and slicing
-src/bidding.py           NEM timetable, fixed daily bands, offer execution, rule baseline
-src/mpc.py               forecast-driven rolling dispatch on a direct HiGHS model
-src/scenario_tree.py     scenario-tree bundling and non-anticipative labels
-src/forecast.py          forecasters, latency and error-pool wrappers, error bootstrap
-src/aemo_forecasts.py    AEMO pre-dispatch and P5MIN archive ingest
-src/ceiling.py           whole-period LP ceiling
-src/stats.py             paired block-bootstrap comparison and decision rule
-src/report.py            tables and figures from a run
-src/coverage.py          per-month input coverage
-src/settlement.py        the one settlement function
-src/validation.py        physical, settlement and ceiling audits
-src/data.py, src/mlf.py  price and loss-factor ingest
-src/layers.py            the per-month comparison behind the reference months
-scripts/                 coverage, studies, suites, reports, verification, mutations
-tests/                   hand-worked, invariant, causality and contract tests
+src/battery_dispatch/
+  market/      prices, AEMO forecasts, loss factors, settlement
+  dispatch/    forecasters, optimiser, scenario model, rolling policy,
+               NEM bidding, scenario tree, ceiling
+  audit/       battery physics and the run audits
+  study/       study spec, tasks and runner, statistics, reports, coverage
+  backtest/    the original perfect-foresight rolling backtest
+  commands/    one module per battery-dispatch subcommand
+  cli.py       the battery-dispatch entry point
+tests/         hand-worked, invariant, causality and contract tests
+scripts/       developer checks (fixture, mutations) and legacy analyses
+config/        dated MLFs and the declared studies
+data/          committed input manifests and coverage reports
+docs/          research note, protocol, limitations, validation, contracts
+results/       committed tables, figures and manifests per suite
+artifacts/     regenerable run outputs (ignored)
 ```
+
+Start with [docs/README.md](docs/README.md) for a guide to the documents.

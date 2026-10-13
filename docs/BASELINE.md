@@ -1,7 +1,9 @@
 # Baseline reproduction
 
 Recorded 13 October 2026, before any model change, so later results can be
-traced back to a reproduced starting point.
+traced back to a reproduced starting point. Commands and paths are as they
+were at that commit; the scripts named here are now `battery-dispatch`
+subcommands, and the modules live under `src/battery_dispatch/`.
 
 ## Source and environment
 
@@ -42,7 +44,7 @@ the empty October 2022 pre-dispatch partition.
 README and `docs/RESULTS.md` to the dollar, for example A$3,609,085.78 for the
 November 2022 bound, 60.9% of it for `L2_aemo`, and A$932,363.53 for
 `L3_aemo` in April 2023. The regenerated `layers.csv` and `layer_gaps.csv` are
-kept in [`results/baseline/`](../results/baseline/), with the layer and gap
+kept in [`results/history/baseline/`](../results/history/baseline/), with the layer and gap
 names as they were at this commit.
 
 After the execution engine was refactored for fixed daily bands, the same
