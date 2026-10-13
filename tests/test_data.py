@@ -3,8 +3,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from battery_dispatch.config import AEST
-from battery_dispatch.data import MarketDataCache, validate_prices
+from battery_dispatch.market.config import AEST
+from battery_dispatch.market.data import MarketDataCache, validate_prices
 
 
 def rows(prices=(10.0, 20.0, 30.0)) -> pd.DataFrame:

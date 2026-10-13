@@ -40,9 +40,9 @@ jobs:
         with:
           path: data/cache
           key: market-data-${{ hashFiles('data/manifests/*.json') }}
-      - run: uv run python scripts/verify_reference.py
-      - run: uv run python scripts/run_layers.py
+      - run: uv run battery-dispatch verify-reference
+      - run: uv run battery-dispatch reference
       - uses: actions/upload-artifact@v4
         with:
           name: reference-layers
-          path: analysis/
+          path: artifacts/analysis/

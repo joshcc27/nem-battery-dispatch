@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.ceiling import perfect_foresight_ceiling
-from battery_dispatch.config import AEST, BatteryConfig, LossFactors, LossFactorTable
-from battery_dispatch.forecast import ErrorBootstrap, PerfectForecast, SameTimeProfile
-from battery_dispatch.mpc import ScenarioDispatchModel, execute_offers, run_forecast_policy
-from battery_dispatch.optimiser import solve_window
-from battery_dispatch.settlement import settle, settlement_coefficients
+from battery_dispatch.dispatch.ceiling import perfect_foresight_ceiling
+from battery_dispatch.dispatch.forecast import ErrorBootstrap, PerfectForecast, SameTimeProfile
+from battery_dispatch.dispatch.optimiser import solve_window
+from battery_dispatch.dispatch.rolling import execute_offers, run_forecast_policy
+from battery_dispatch.dispatch.scenario_model import ScenarioDispatchModel
+from battery_dispatch.market.config import AEST, BatteryConfig, LossFactors, LossFactorTable
+from battery_dispatch.market.settlement import settle, settlement_coefficients
 
 
 def hourly_asset(**changes: float) -> BatteryConfig:

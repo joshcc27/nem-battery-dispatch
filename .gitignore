@@ -10,7 +10,5 @@ build/
 dist/
 *.egg-info/
 data/cache/
-outputs/
-analysis/
-runs/
 data/cache_stale_*/
+artifacts/

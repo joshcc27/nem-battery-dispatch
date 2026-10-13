@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from battery_dispatch.forecast import ErrorBootstrap, PerfectForecast, SameTimeProfile
+from battery_dispatch.dispatch.forecast import ErrorBootstrap, PerfectForecast, SameTimeProfile
 
 
 def test_persistence_repeats_the_last_day() -> None:

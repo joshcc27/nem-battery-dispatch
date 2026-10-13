@@ -6,15 +6,19 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.battery import energy_balance_residual, soc_path
-from battery_dispatch.config import (
+from battery_dispatch.audit.battery import energy_balance_residual, soc_path
+from battery_dispatch.market.config import (
     AEST,
     BatteryConfig,
     LossFactors,
     LossFactorTable,
     financial_year,
 )
-from battery_dispatch.settlement import break_even_discharge_price, settle, settlement_coefficients
+from battery_dispatch.market.settlement import (
+    break_even_discharge_price,
+    settle,
+    settlement_coefficients,
+)
 
 
 def asset(**changes: float) -> BatteryConfig:

@@ -24,9 +24,8 @@ report = ["matplotlib>=3.8"]
 [project.scripts]
 battery-dispatch = "battery_dispatch.cli:main"
 
-[tool.setuptools]
-package-dir = {battery_dispatch = "src"}
-packages = ["battery_dispatch"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

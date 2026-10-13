@@ -33,18 +33,18 @@ jobs:
           path: data/cache
           key: study-data-${{ hashFiles(inputs.study) }}
       - name: Run the study
-        run: uv run python scripts/run_study.py "${{ inputs.study }}" --jobs "${{ inputs.jobs }}"
+        run: uv run battery-dispatch study "${{ inputs.study }}" --jobs "${{ inputs.jobs }}"
       - name: Regenerate tables and figures
         run: |
-          run=$(ls -td runs/*/ | head -1)
-          uv run python scripts/make_report.py "$run" --out reproduced
-          uv run python scripts/verify_inputs.py reproduced/report_manifest.json
+          run=$(ls -td artifacts/runs/*/ | head -1)
+          uv run battery-dispatch report "$run" --out reproduced
+          uv run battery-dispatch verify-inputs reproduced/report_manifest.json
       - uses: actions/upload-artifact@v4
         with:
           name: study
           path: |
             reproduced/
-            runs/*/manifest.json
-            runs/*/summary.csv
-            runs/*/monthly.csv
-            runs/*/daily.csv
+            artifacts/runs/*/manifest.json
+            artifacts/runs/*/summary.csv
+            artifacts/runs/*/monthly.csv
+            artifacts/runs/*/daily.csv

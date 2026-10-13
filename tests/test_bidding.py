@@ -4,8 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.aemo_forecasts import ForecastRuns
-from battery_dispatch.bidding import (
+from battery_dispatch.dispatch.bidding import (
     NEM_TIMETABLE,
     Timetable,
     band_prices,
@@ -14,9 +13,8 @@ from battery_dispatch.bidding import (
     snap_charge,
     snap_discharge,
 )
-from battery_dispatch.ceiling import perfect_foresight_ceiling
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.forecast import (
+from battery_dispatch.dispatch.ceiling import perfect_foresight_ceiling
+from battery_dispatch.dispatch.forecast import (
     AemoForecast,
     ErrorBootstrap,
     LaggedForecaster,
@@ -25,8 +23,11 @@ from battery_dispatch.forecast import (
     ThinnedErrorHistory,
     grid_times,
 )
-from battery_dispatch.mpc import ScenarioDispatchModel, run_forecast_policy
-from battery_dispatch.settlement import settle
+from battery_dispatch.dispatch.rolling import run_forecast_policy
+from battery_dispatch.dispatch.scenario_model import ScenarioDispatchModel
+from battery_dispatch.market.aemo_forecasts import ForecastRuns
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.market.settlement import settle
 
 
 def hourly_asset(**changes: float) -> BatteryConfig:

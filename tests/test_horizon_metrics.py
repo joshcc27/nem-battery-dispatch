@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.horizon import run_rolling_horizon
-from battery_dispatch.metrics import summarise_run, write_run_outputs
-from battery_dispatch.settlement import settle
+from battery_dispatch.backtest.horizon import run_rolling_horizon
+from battery_dispatch.backtest.metrics import summarise_run, write_run_outputs
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.market.settlement import settle
 
 
 def test_rolling_horizon_settlement_metrics_and_outputs(tmp_path) -> None:

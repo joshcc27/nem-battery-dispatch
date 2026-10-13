@@ -6,17 +6,17 @@ import json
 
 import pandas as pd
 
-from battery_dispatch.ceiling import audit_ceiling, perfect_foresight_ceiling
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.horizon import run_rolling_horizon
-from battery_dispatch.metrics import summarise_run
-from battery_dispatch.settlement import settle
-from battery_dispatch.validation import (
+from battery_dispatch.audit.validation import (
     assert_audit_passes,
     audit_completed_cycles,
     audit_dispatch,
     audit_prices,
 )
+from battery_dispatch.backtest.horizon import run_rolling_horizon
+from battery_dispatch.backtest.metrics import summarise_run
+from battery_dispatch.dispatch.ceiling import audit_ceiling, perfect_foresight_ceiling
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.market.settlement import settle
 
 
 def main() -> None:

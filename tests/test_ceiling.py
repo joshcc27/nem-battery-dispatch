@@ -5,12 +5,12 @@ import pandas as pd
 import pytest
 from test_validation import passing_audit
 
-from battery_dispatch.ceiling import audit_ceiling, perfect_foresight_ceiling
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.horizon import run_rolling_horizon
-from battery_dispatch.optimiser import solve_window
-from battery_dispatch.settlement import settle
-from battery_dispatch.validation import assert_audit_passes
+from battery_dispatch.audit.validation import assert_audit_passes
+from battery_dispatch.backtest.horizon import run_rolling_horizon
+from battery_dispatch.dispatch.ceiling import audit_ceiling, perfect_foresight_ceiling
+from battery_dispatch.dispatch.optimiser import solve_window
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.market.settlement import settle
 
 
 def asset(**changes: float) -> BatteryConfig:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.sensitivity import EndpointCase, run_sensitivities
+from battery_dispatch.backtest.sensitivity import EndpointCase, run_sensitivities
+from battery_dispatch.market.config import AEST, BatteryConfig
 
 
 def test_endpoint_and_degradation_sensitivity() -> None:

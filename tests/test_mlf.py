@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from battery_dispatch.mlf import load_loss_factor_schedule
+from battery_dispatch.market.mlf import load_loss_factor_schedule
 
 
 def write_schedule(path: Path, **changes: str) -> None:

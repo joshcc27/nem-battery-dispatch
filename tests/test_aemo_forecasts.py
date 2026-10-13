@@ -9,14 +9,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.aemo_forecasts import (
+from battery_dispatch.dispatch.forecast import AemoForecast, SameTimeProfile, grid_times
+from battery_dispatch.market.aemo_forecasts import (
     ForecastCache,
     ForecastRuns,
     parse_forecasts,
     validate_forecasts,
 )
-from battery_dispatch.config import AEST
-from battery_dispatch.forecast import AemoForecast, SameTimeProfile, grid_times
+from battery_dispatch.market.config import AEST
 
 
 def archive(lines: list[str]) -> bytes:

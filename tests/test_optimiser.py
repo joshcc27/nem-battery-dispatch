@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.battery import energy_balance_residual
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.optimiser import solve_window
-from battery_dispatch.settlement import settle
+from battery_dispatch.audit.battery import energy_balance_residual
+from battery_dispatch.dispatch.optimiser import solve_window
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.market.settlement import settle
 
 
 def make_asset(**changes: float) -> BatteryConfig:

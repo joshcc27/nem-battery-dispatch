@@ -10,8 +10,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from battery_dispatch import cli
-from battery_dispatch.config import AEST
+from battery_dispatch.commands import backtest as cli
+from battery_dispatch.market.config import AEST
 
 START = "2022-11-01 00:00"
 END = "2022-11-01 02:00"
@@ -39,7 +39,7 @@ def stub_compiler(*args, **kwargs):
 @pytest.fixture
 def cached_prices(tmp_path, monkeypatch):
     """A cache primed from the stub, so no test reaches the network."""
-    from battery_dispatch.data import MarketDataCache
+    from battery_dispatch.market.data import MarketDataCache
 
     cache_root = tmp_path / "cache"
     MarketDataCache(cache_root).fetch_prices(
@@ -52,8 +52,20 @@ def cached_prices(tmp_path, monkeypatch):
 
 
 def run_cli(monkeypatch, argv: list[str]) -> None:
-    monkeypatch.setattr("sys.argv", ["battery-dispatch", *argv])
-    cli.main()
+    """Through the ``battery-dispatch`` dispatcher, as a user would run it."""
+    from battery_dispatch.cli import main
+
+    main(["backtest", *argv])
+
+
+def test_dispatcher_lists_commands_and_rejects_unknown_ones(capsys) -> None:
+    from battery_dispatch.cli import COMMANDS, main
+
+    main([])
+    listed = capsys.readouterr().out
+    assert all(name in listed for name in COMMANDS)
+    with pytest.raises(SystemExit, match="Unknown command"):
+        main(["not-a-command"])
 
 
 def test_cli_writes_audited_outputs_with_a_loss_factor_file(

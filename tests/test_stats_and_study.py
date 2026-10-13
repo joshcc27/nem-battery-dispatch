@@ -7,20 +7,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.bidding import band_prices
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.layers import LayerSettings
-from battery_dispatch.stats import block_bootstrap_means, paired_comparison, verdict
-from battery_dispatch.study import (
-    StudyConfig,
-    Task,
-    _Inputs,
-    load_study,
-    run_task,
-    slices,
-    tasks_for,
-    warm_up_days,
-)
+from battery_dispatch.dispatch.bidding import band_prices
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.study.layers import LayerSettings
+from battery_dispatch.study.runner import slices
+from battery_dispatch.study.spec import StudyConfig, Task, load_study, tasks_for, warm_up_days
+from battery_dispatch.study.stats import block_bootstrap_means, paired_comparison, verdict
+from battery_dispatch.study.tasks import _Inputs, run_task
 
 
 def test_block_bootstrap_keeps_whole_blocks_and_is_repeatable() -> None:
@@ -168,7 +161,7 @@ def test_tasks_run_settle_audit_and_slice_on_one_continuous_trace() -> None:
 
 
 def test_protocol_hash_ignores_line_endings(tmp_path: Path) -> None:
-    from battery_dispatch.study import text_sha256
+    from battery_dispatch.study.runner import text_sha256
 
     lf = tmp_path / "lf.md"
     crlf = tmp_path / "crlf.md"

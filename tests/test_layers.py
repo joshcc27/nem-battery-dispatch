@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.aemo_forecasts import ForecastRuns
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.layers import LAYER_ORDER, LayerSettings, layer_gaps, run_layers
+from battery_dispatch.market.aemo_forecasts import ForecastRuns
+from battery_dispatch.market.config import AEST, BatteryConfig
+from battery_dispatch.study.layers import LAYER_ORDER, LayerSettings, layer_gaps, run_layers
 
 SETTINGS = LayerSettings(
     deg_cost=2.0,

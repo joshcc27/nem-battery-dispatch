@@ -1,0 +1,159 @@
+{
+  "run_id": "test-latency15-f22bc253ab",
+  "run_directory": "artifacts/runs/test-latency15-f22bc253ab",
+  "config_sha256": "f22bc253ab4010bd6a2784393370cefbd10e86a09c5544796219ce280ad9a8d3",
+  "source": {
+    "commit": "e72302679b7ea6214323fc1edb62c4353e46df52",
+    "branch": "study-completion",
+    "source_tree_clean": true,
+    "source_tree_changes": []
+  },
+  "inputs": {
+    "warm_up_start": "2023-04-29T00:00:00+10:00",
+    "evaluation_start": "2023-06-01T00:00:00+10:00",
+    "evaluation_end": "2024-06-01T00:00:00+10:00",
+    "loss_factor_file_sha256": "01b0884b88d3edd88a827aa08f1e98b88a10b7ecd95482431fc2ca40565071c4",
+    "months": [
+      {
+        "month": "2023-04",
+        "price_rows": 8640,
+        "price_sha256": "8cb10b62f693d61c51502e5cff2254127fb91203d95647117322e21a65ca7ccf",
+        "predispatch_rows": 79920,
+        "predispatch_sha256": "3735e2f7e14c4d7b7ac5197abb763b331921664d2d6f58d950f8bccd8e539f1b",
+        "p5min_rows": 103680,
+        "p5min_sha256": "358705324836c9c0d93dcb8524d72a632176a9147f4ba050fc7962af00316762"
+      },
+      {
+        "month": "2023-05",
+        "price_rows": 8928,
+        "price_sha256": "14c88d1fcb982697d634a89765897e7b30d5975d02876eecee7ff59d2d587591",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "ee21adc7e6e586986cad8ada462a4bf094fd337eae25de579d41ec45931e1f13",
+        "p5min_rows": 107136,
+        "p5min_sha256": "db975081a22264fde552ff4a9102dc595fb2dcd95080bf53f87c5f7fe74f9ff7"
+      },
+      {
+        "month": "2023-06",
+        "price_rows": 8640,
+        "price_sha256": "7fe5cdbbdf8f5b16b1a6ad54ff711ce458e297f85aa29692dd2a71ba95bac088",
+        "predispatch_rows": 79920,
+        "predispatch_sha256": "c006b3bcc2b4429018a1c35e4c845561686590d5fc7924c97605ec4bdcb7058d",
+        "p5min_rows": 103680,
+        "p5min_sha256": "6ef8b13d2564fe0a93bbcd8f47e4c978a600f192577e595e4042a147c70e0cdb"
+      },
+      {
+        "month": "2023-07",
+        "price_rows": 8928,
+        "price_sha256": "5aafa310ce7b8bffdaf20fc96dfd39b0d359929a9f4d0256c8c9d5e489fd0dee",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "c5dd3dafe1940a24d45f8fc2a2ccd7a70ee8fe135bd5c0eb39b0e5ae5b38b141",
+        "p5min_rows": 107136,
+        "p5min_sha256": "63c0503b54ef0c3bfe955d60d31cdfcc50a130fdcf418c7da40bbe80c6280483"
+      },
+      {
+        "month": "2023-08",
+        "price_rows": 8928,
+        "price_sha256": "7806b8d58c90123685c07446634689f5ecee377cf03239fc7eb3872a9374dec2",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "ad642ecaa8430264098ea27a0eca2e76e5ed0533fc0672ae28be7f1d254325f8",
+        "p5min_rows": 107136,
+        "p5min_sha256": "d2a2dc590ae6fe917a5a6911ad72954baee91ef5c585d30997800b00bc198933"
+      },
+      {
+        "month": "2023-09",
+        "price_rows": 8640,
+        "price_sha256": "8ac5d58ca31391bc056c69b4dc1a3141e42725da7a86d4d19522cf753774671b",
+        "predispatch_rows": 79920,
+        "predispatch_sha256": "33c2906450b1f91fa92eb7c1dead0811e7a96d94c12981270da5d839113ce26e",
+        "p5min_rows": 103680,
+        "p5min_sha256": "e119f4b16dad137cf89cc53d524aeb318948596249e64dc21e4a2ce5dfa330c4"
+      },
+      {
+        "month": "2023-10",
+        "price_rows": 8928,
+        "price_sha256": "59dc19b8cc4cefd1a0ea795c533a85604450f0eed35c692c01515cbfb790a076",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "9a8c39f832c103968a7c12126476d0b0a157e26234823c53074bcd4dcd1a9ce8",
+        "p5min_rows": 107136,
+        "p5min_sha256": "eeb9e39b2da9ee92c83bdc7166d4a0493ed77b8e56d3159eb1e207ebe7955f0d"
+      },
+      {
+        "month": "2023-11",
+        "price_rows": 8640,
+        "price_sha256": "04f564256e6cce9f10e329f287082914ad001ca0810240b8f963ecc935ea841c",
+        "predispatch_rows": 79920,
+        "predispatch_sha256": "3d1530c4f579a79ef085e7d21743d6028f51c1add9db059b0677766f633e361f",
+        "p5min_rows": 103680,
+        "p5min_sha256": "83d8a486a4efa8c541a764f6d81a398c1cb1fc1369cd242c1519ff3553b285c1"
+      },
+      {
+        "month": "2023-12",
+        "price_rows": 8928,
+        "price_sha256": "3ba9159a3e1c5466c881ec081a2606c07690cb924aaa3fe3e32aa78cff8c4bdc",
+        "predispatch_rows": 82512,
+        "predispatch_sha256": "97e493ff48475acc63311df42c9b481e66b135876e68fa88b12023120ff65a33",
+        "p5min_rows": 107112,
+        "p5min_sha256": "a131de2dc9925f7cb4e3e56aec335d3067a8f4529499539c384e3e179c06264f"
+      },
+      {
+        "month": "2024-01",
+        "price_rows": 8928,
+        "price_sha256": "3e7577a8e0620505531d0f3e6e92578faa8df51892c1544dc01c544556427bd5",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "f06b11394129f83504567db6e74669375ddc51db5aacd26d60d78a65c228b595",
+        "p5min_rows": 107136,
+        "p5min_sha256": "b49b9a75204ad14cc958cc73c24fbd4249a5df1c0413b7b29c12217a65fcc65a"
+      },
+      {
+        "month": "2024-02",
+        "price_rows": 8352,
+        "price_sha256": "921b516f33f019665361a536ed1e05a1466d6a07ff21a128d7c1e2de92d93da8",
+        "predispatch_rows": 77256,
+        "predispatch_sha256": "e45415816da41732710bbbadeb8329beabed91ebee3ad7dde4d013aebeb038fa",
+        "p5min_rows": 100224,
+        "p5min_sha256": "9cdbef38d2ea564ca5ecacac176917716d37c9333963372e1dd61f192417efff"
+      },
+      {
+        "month": "2024-03",
+        "price_rows": 8928,
+        "price_sha256": "f4fbda2ad70d87118c718e6acf65141cd6588c8baa643f1fb6d9fa940d515b56",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "1dd33e5c07fbd7a0444cd8720034b731341ba084993b894702c39a6c5824a595",
+        "p5min_rows": 107136,
+        "p5min_sha256": "3ca223d819d673ba0524f7609a944798f0495190da42fe09286d3a625c7819bc"
+      },
+      {
+        "month": "2024-04",
+        "price_rows": 8640,
+        "price_sha256": "2c0d98dec73caf3eea34c920fb6c33a46a4d722616ca1ec143ac547e85cb066b",
+        "predispatch_rows": 79920,
+        "predispatch_sha256": "15d74d400d17de04f037c7955b4a1317b79bee5f76facee2103cbcf6b2fc7aee",
+        "p5min_rows": 103680,
+        "p5min_sha256": "12075289ddc7cd0059d191639fdedde5435382cc64bcd1ae790b9936e3acb63a"
+      },
+      {
+        "month": "2024-05",
+        "price_rows": 8928,
+        "price_sha256": "279248a229becc81df24834217151395c2bdf46a92450d6d7a2fe99bbe1c4a7e",
+        "predispatch_rows": 82584,
+        "predispatch_sha256": "30ad72256d6f54d610dc6365c10f0b70c0c9231e1970078faf2b77c18bee1b45",
+        "p5min_rows": 107136,
+        "p5min_sha256": "2112ec8d690df74691466bbcbe87eec9fc2d7710449abb9aa51fe0dd7aec105f"
+      }
+    ]
+  },
+  "all_audits_passed": true,
+  "headline_execution": "fixed_bands",
+  "files": {
+    "policies.csv": "96b513b9f89d91cc94d114aab18139404a47f96daf04dd0b8e2f4436ab158590",
+    "comparisons.csv": "d4971728186cd6040ec357192a02c7c4134711cda72318dfd5017cdb8e5e237a",
+    "execution_comparisons.csv": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "seed_differences.csv": "a50fe5552443dadd5c81349f44e45c3f5e4e597a122216102527541ff8db00df",
+    "monthly_revenue.csv": "ec972bb0f66399641f05ecd4c11e7792d8b24ddb782c1e7fa076c1e5ff54064e",
+    "monthly_uplift.csv": "347f751e6d3b1958cfb28f28066f4aedd32390bcfc08a61dc177798843b7d861",
+    "tables.md": "28adacbbbf186a1c38d7f3358bee5ad3b62248daa362211270873c1b2b0b19bc",
+    "fig1_monthly_revenue.png": "ee1152246395f623cbe949154f3a5d1e5f26ffe9b8bb641c0a93933eb25eb493",
+    "fig2_share_of_ceiling.png": "f73668e86038edb268096e387136000ac6d6aeb37f9ca6f26928d135824153ec",
+    "fig3_dispatch_case.png": "6df15f48bf9d9873a69a3dc8c3b0562c7a06789974b1ecbbacd4b45e7ccf50cc"
+  }
+}

@@ -8,15 +8,15 @@ import pandas as pd
 import pytest
 from test_validation import passing_audit
 
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.horizon import run_rolling_horizon
-from battery_dispatch.optimiser import (
+from battery_dispatch.audit.validation import assert_audit_passes, audit_dispatch
+from battery_dispatch.backtest.horizon import run_rolling_horizon
+from battery_dispatch.dispatch.optimiser import (
     STRICT_SOLVER_POLICY,
     THROUGHPUT_TIE_BREAKER_AUD_PER_MWH,
     SolverPolicy,
     solve_window,
 )
-from battery_dispatch.validation import assert_audit_passes, audit_dispatch
+from battery_dispatch.market.config import AEST, BatteryConfig
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from analyse_exclusivity_binding import binding_price_threshold  # noqa: E402
@@ -126,8 +126,8 @@ def test_a_stuck_warm_start_is_solved_by_a_fresh_instance() -> None:
     """HiGHS can report Unknown on a warm instance at the optimum; rebuild once."""
     import highspy
 
-    from battery_dispatch.config import BatteryConfig
-    from battery_dispatch.mpc import ScenarioDispatchModel, _run_to_optimality
+    from battery_dispatch.dispatch.scenario_model import ScenarioDispatchModel, _run_to_optimality
+    from battery_dispatch.market.config import BatteryConfig
 
     asset = BatteryConfig(generation_loss_factor=1.0, load_loss_factor=1.0)
     import numpy as np

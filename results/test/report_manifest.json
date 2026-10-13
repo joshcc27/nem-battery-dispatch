@@ -1,6 +1,6 @@
 {
   "run_id": "test-651eeca4c3",
-  "run_directory": "runs/test-651eeca4c3",
+  "run_directory": "artifacts/runs/test-651eeca4c3",
   "config_sha256": "651eeca4c3e96451ddd30c169b3a84077d7647bb56137aa3eb8fe64e1ebbedd0",
   "source": {
     "commit": "e72302679b7ea6214323fc1edb62c4353e46df52",
@@ -145,14 +145,14 @@
   "all_audits_passed": true,
   "headline_execution": "fixed_bands",
   "files": {
-    "policies.csv": "dc32b84b78c4aa4836f91d105fa8596e14a91f447077dbec3c55c3f12b2036d9",
-    "comparisons.csv": "129be870d0977a89055a8546e1562aff869c735ae153b99edd6f5a732cc8f933",
-    "comparisons_bands.csv": "ba8365fb26a2cd9782457dc7a0b3642f097baac1f14038fa2d89475547239c60",
-    "execution_comparisons.csv": "1a750ace0b5a19f74f1b5cb6b502e20d984c17748241d8dc3bca825a6a612e70",
-    "seed_differences.csv": "ecda9ad648cfc48e808f8e411fc5bdfc06485cba25b8f537260f7dc777f77b13",
-    "monthly_revenue.csv": "4ad0877acae94e4f920ab10a3ade6d6cc5f66a919918caf5ff601eaf47335369",
-    "monthly_uplift.csv": "78430cfef0fb2a6cbe998024794757639f259d46599d5eaf5da96a5c05ab53fc",
-    "tables.md": "7d4fbc02c7c13dfb1df11d0aff9d795e1e98f33b633587b9c74cbd3ec5d5c07b",
+    "policies.csv": "8a00465e416d9ea765ba4be8d682d5d3d578eced188472424af4573f968996b7",
+    "comparisons.csv": "362e0b42c6ecaa1bc99c4b8f2f30dc0bc243b9a18161dc4a9fdf53f81b261b1f",
+    "comparisons_bands.csv": "c366abdc4aef4a9e1c4506e3435e6095d595fd18ae8b1c9c2e44009880a642de",
+    "execution_comparisons.csv": "1066a186b745bca31626bd69b12800ac4a1c42b8df4c4d3c8b52146a33c9e0ed",
+    "seed_differences.csv": "85c0778481ffa93543da1faeac72c89faad7537b5f62fb0b12dce829fae6d2c0",
+    "monthly_revenue.csv": "b3ff5893c17bf2b94630bdef5c215f808b4c2d5e1992cf7ecab3cba4a4e0bdb1",
+    "monthly_uplift.csv": "59f379c84cd636eb877250004d840e996beed6e660adf8962cfbb59c1c597a7e",
+    "tables.md": "742fbaefd03bb50d447e7b6878c9421327cfb842bfcdfe881e24cbe0b3d73155",
     "fig1_monthly_revenue.png": "ca91f9c85b04d9707c932322a0931cb1dcf3ec0c79b95b6c7da1cf5101c549e1",
     "fig2_share_of_ceiling.png": "08fa7f51eed2bd6e3984355de131a85542e3446ccd6891ede6ad7b75bcc26271",
     "fig3_dispatch_case.png": "15f6c8fde4267669598f2e2a25fca2cd422bc849c88c2b9e82173caff9dc1a56"

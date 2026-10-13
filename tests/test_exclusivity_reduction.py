@@ -5,12 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from battery_dispatch.config import BatteryConfig
-from battery_dispatch.optimiser import (
-    exclusivity_binding_mask,
-    solve_window,
-)
-from battery_dispatch.settlement import settlement_coefficients
+from battery_dispatch.dispatch.optimiser import exclusivity_binding_mask, solve_window
+from battery_dispatch.market.config import BatteryConfig
+from battery_dispatch.market.settlement import settlement_coefficients
 
 
 def make_asset(**changes: float) -> BatteryConfig:
@@ -59,7 +56,7 @@ def test_zero_degradation_keeps_a_binary_at_every_negative_price() -> None:
 def _solve_with_all_binaries(prices, asset, soc_initial, deg_cost, monkeypatch):
     """Solve with the original formulation: one binary on every interval."""
     monkeypatch.setattr(
-        "battery_dispatch.optimiser.exclusivity_binding_mask",
+        "battery_dispatch.dispatch.optimiser.exclusivity_binding_mask",
         lambda cashflows, asset, **kwargs: np.ones(
             len(cashflows.charge_value_per_mw), dtype=bool
         ),

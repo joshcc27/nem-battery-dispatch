@@ -1,7 +1,7 @@
 """Run the optional endpoint/degradation grid on the November 2022 month.
 
 This is a secondary analysis of the perfect-foresight rolling dispatch, not
-part of the three-layer comparison (``scripts/run_layers.py``), and CI does
+part of the three-layer comparison (``battery-dispatch reference``), and CI does
 not run it. The exclusivity reduction in ``exclusivity_binding_mask`` keeps
 every scenario at a strict 1e-6 relative gap; the grid takes about 100
 seconds, 74 of them in the A$10/MWh case.
@@ -21,11 +21,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from battery_dispatch.config import BatteryConfig
-from battery_dispatch.data import MarketDataCache
-from battery_dispatch.mlf import load_loss_factor_schedule
-from battery_dispatch.optimiser import STRICT_SOLVER_POLICY
-from battery_dispatch.sensitivity import EndpointCase, run_sensitivities
+from battery_dispatch.backtest.sensitivity import EndpointCase, run_sensitivities
+from battery_dispatch.dispatch.optimiser import STRICT_SOLVER_POLICY
+from battery_dispatch.market.config import BatteryConfig
+from battery_dispatch.market.data import MarketDataCache
+from battery_dispatch.market.mlf import load_loss_factor_schedule
 
 REFERENCE_START = "2022-11-01 00:00"
 REFERENCE_END = "2022-12-01 00:00"
@@ -55,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, default=Path("data/cache"))
     parser.add_argument(
-        "--output", type=Path, default=Path("analysis/reference_sensitivities.csv")
+        "--output", type=Path, default=Path("artifacts/analysis/reference_sensitivities.csv")
     )
     parser.add_argument(
         "--scenario",
@@ -145,7 +145,7 @@ def main() -> None:
         )
 
     results = pd.concat(rows, ignore_index=True)
-    results.to_csv(args.output, index=False)
+    results.to_csv(args.output, index=False, lineterminator="\n")
     print()
     print(results[REPORT_COLUMNS].to_string(index=False))
     print(f"\nWrote {args.output}")

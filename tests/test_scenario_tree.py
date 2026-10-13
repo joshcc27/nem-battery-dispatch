@@ -4,16 +4,17 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from battery_dispatch.config import AEST, BatteryConfig
-from battery_dispatch.forecast import ErrorBootstrap, SameTimeProfile
-from battery_dispatch.mpc import ScenarioDispatchModel, run_forecast_policy
-from battery_dispatch.scenario_tree import (
+from battery_dispatch.dispatch.forecast import ErrorBootstrap, SameTimeProfile
+from battery_dispatch.dispatch.rolling import run_forecast_policy
+from battery_dispatch.dispatch.scenario_model import ScenarioDispatchModel
+from battery_dispatch.dispatch.scenario_tree import (
     bundle_to_tree,
     history_labels,
     is_nonanticipative,
     parse_splits,
     two_stage_labels,
 )
+from battery_dispatch.market.config import AEST, BatteryConfig
 
 
 def hourly_asset(**changes: float) -> BatteryConfig:
