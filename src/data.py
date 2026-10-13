@@ -41,10 +41,14 @@ def _assert_complete_range(
         # interval-ending: (start, end].
         expected = pd.date_range(expected_start + frequency, expected_end, freq=frequency)
     for region, group in frame.groupby("regionid", sort=False):
-        region_expected = expected if expected_start is not None else pd.date_range(
-            group["settlementdate"].min(),
-            group["settlementdate"].max(),
-            freq=frequency,
+        region_expected = (
+            expected
+            if expected_start is not None
+            else pd.date_range(
+                group["settlementdate"].min(),
+                group["settlementdate"].max(),
+                freq=frequency,
+            )
         )
         actual = pd.DatetimeIndex(group["settlementdate"])
         missing = region_expected.difference(actual)
@@ -81,14 +85,10 @@ def validate_prices(
     if frame[["settlementdate", "regionid", "rrp"]].isna().any().any():
         raise ValueError("Price data contains NaNs")
 
-    _assert_complete_range(
-        frame, expected_start=expected_start, expected_end=expected_end
-    )
+    _assert_complete_range(frame, expected_start=expected_start, expected_end=expected_end)
 
     caps = frame["settlementdate"].map(market_price_cap).to_numpy(dtype=float)
-    invalid = (frame["rrp"].to_numpy() < MARKET_FLOOR_PRICE) | (
-        frame["rrp"].to_numpy() > caps
-    )
+    invalid = (frame["rrp"].to_numpy() < MARKET_FLOOR_PRICE) | (frame["rrp"].to_numpy() > caps)
     if invalid.any():
         examples = frame.loc[invalid, ["settlementdate", "regionid", "rrp"]].head(3)
         raise ValueError(f"RRP lies outside the dated market bounds:\n{examples}")
@@ -220,7 +220,4 @@ class MarketDataCache:
             & combined["settlementdate"].le(end_ts)
             & combined["regionid"].isin(region_list)
         ]
-        return validate_prices(
-            combined, expected_start=start_ts, expected_end=end_ts
-        )
-
+        return validate_prices(combined, expected_start=start_ts, expected_end=end_ts)

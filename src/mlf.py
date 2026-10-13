@@ -93,9 +93,7 @@ def load_loss_factor_schedule(
 
     by_fy: dict[str, LossFactors] = {}
     for index, row in selected.iterrows():
-        provenance = (
-            f"{row['source_title']}, p.{row['source_page']}, {row['source_url']}"
-        )
+        provenance = f"{row['source_title']}, p.{row['source_page']}, {row['source_url']}"
         by_fy[row["financial_year"]] = LossFactors(
             generation=float(generation.loc[index]),
             load=float(load.loc[index]),

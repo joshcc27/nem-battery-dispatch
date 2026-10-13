@@ -46,12 +46,9 @@ def build_parser() -> argparse.ArgumentParser:
 def asset_from_args(args: argparse.Namespace) -> BatteryConfig:
     if args.loss_factor_file is not None:
         if any(
-            value is not None
-            for value in (args.generation_mlf, args.load_mlf, args.mlf_source)
+            value is not None for value in (args.generation_mlf, args.load_mlf, args.mlf_source)
         ):
-            raise ValueError(
-                "--loss-factor-file cannot be combined with scalar MLF arguments"
-            )
+            raise ValueError("--loss-factor-file cannot be combined with scalar MLF arguments")
         schedule = load_loss_factor_schedule(
             args.loss_factor_file,
             region=args.region,
@@ -73,9 +70,7 @@ def asset_from_args(args: argparse.Namespace) -> BatteryConfig:
         "--connection-point": args.connection_point,
     }
     if missing := [name for name, value in required.items() if value is None]:
-        raise ValueError(
-            "Scalar MLF mode requires " + ", ".join(missing)
-        )
+        raise ValueError("Scalar MLF mode requires " + ", ".join(missing))
     return BatteryConfig(
         generation_loss_factor=args.generation_mlf,
         load_loss_factor=args.load_mlf,

@@ -47,6 +47,7 @@ from .optimiser import (
     SolverPolicy,
     exclusivity_binding_mask,
 )
+from .scenario_tree import bundle_to_tree
 from .settlement import SettlementCoefficients, settlement_coefficients
 
 
@@ -75,21 +76,34 @@ class ScenarioSolution:
     stored_energy_path: np.ndarray
 
 
-def _run_to_optimality(highs: highspy.Highs, what: str) -> None:
-    """Solve, retrying once from a cold start before failing.
+def _run_to_optimality(highs: highspy.Highs, what: str) -> highspy.Highs:
+    """Solve, retrying before failing, and return the instance that succeeded.
 
     Re-pricing a warm-started model between decisions is what keeps each solve
     fast, but after an extreme price scenario the carried-over basis can leave
     HiGHS without a verdict ("Unknown"). Discarding it and solving again from
-    scratch resolves that; a second failure is a real one.
+    scratch usually resolves that. Rarely the same instance still reports
+    "Unknown" at the optimal objective (seen once, on an all-continuous decision
+    with every decision shared); a fresh instance built from the identical model
+    then solves it. A third failure is a real one.
     """
     highs.run()
     if highs.getModelStatus() != highspy.HighsModelStatus.kOptimal:
         highs.clearSolver()
         highs.run()
+    if highs.getModelStatus() != highspy.HighsModelStatus.kOptimal:
+        fresh = highspy.Highs()
+        fresh.setOptionValue("output_flag", False)
+        gap = highs.getOptionValue("mip_rel_gap")
+        # highspy returns (status, value) here in some versions.
+        fresh.setOptionValue("mip_rel_gap", float(gap[1] if isinstance(gap, tuple) else gap))
+        fresh.passModel(highs.getLp())
+        fresh.run()
+        highs = fresh
     status = highs.getModelStatus()
     if status != highspy.HighsModelStatus.kOptimal:
         raise RuntimeError(f"HiGHS failed on the {what}: {highs.modelStatusToString(status)}")
+    return highs
 
 
 class ScenarioDispatchModel:
@@ -101,6 +115,14 @@ class ScenarioDispatchModel:
     ever implemented, so only they carry exclusivity binaries. ``shared`` longer
     than ``committed`` makes the plan less clairvoyant about the scenarios'
     futures: ``shared == steps`` is one plan for every scenario.
+
+    ``groups`` generalises both. It is an integer label per scenario and
+    interval, and scenarios with the same label at an interval share that
+    interval's decision. A scenario tree, in which decisions stay shared while
+    scenarios have the same observed history, is one such labelling (see
+    :mod:`battery_dispatch.scenario_tree`). The committed block must be shared
+    by every scenario.
+
     Where the dominance argument in
     :func:`~battery_dispatch.optimiser.exclusivity_binding_mask` proves a
     binary redundant it is solved as continuous.
@@ -114,6 +136,7 @@ class ScenarioDispatchModel:
         committed: int,
         scenarios: int,
         shared: int | None = None,
+        groups: np.ndarray | None = None,
     ) -> None:
         shared = committed if shared is None else shared
         if not 1 <= committed <= shared <= steps or scenarios < 1:
@@ -123,21 +146,34 @@ class ScenarioDispatchModel:
         self.committed = committed
         self.shared = shared
         self.scenarios = scenarios
-        tail = steps - shared
-        self._tail_offset = 2 * shared
-        self._per_scenario_tail = 2 * tail
-        self._soc_offset = self._tail_offset + scenarios * self._per_scenario_tail
-        self._mode_offset = self._soc_offset + scenarios * steps
-        self.num_col = self._mode_offset + committed
-
         charge_cols = np.empty((scenarios, steps), dtype=np.int64)
         discharge_cols = np.empty((scenarios, steps), dtype=np.int64)
-        for s in range(scenarios):
-            charge_cols[s, :shared] = np.arange(shared)
-            discharge_cols[s, :shared] = shared + np.arange(shared)
-            base = self._tail_offset + s * self._per_scenario_tail
-            charge_cols[s, shared:] = base + np.arange(tail)
-            discharge_cols[s, shared:] = base + tail + np.arange(tail)
+        if groups is None:
+            tail = steps - shared
+            tail_offset = 2 * shared
+            per_scenario_tail = 2 * tail
+            self._soc_offset = tail_offset + scenarios * per_scenario_tail
+            for s in range(scenarios):
+                charge_cols[s, :shared] = np.arange(shared)
+                discharge_cols[s, :shared] = shared + np.arange(shared)
+                base = tail_offset + s * per_scenario_tail
+                charge_cols[s, shared:] = base + np.arange(tail)
+                discharge_cols[s, shared:] = base + tail + np.arange(tail)
+        else:
+            groups = np.asarray(groups)
+            if groups.shape != (scenarios, steps):
+                raise ValueError(f"groups must have shape {(scenarios, steps)}")
+            if (groups[:, :committed] != groups[:1, :committed]).any():
+                raise ValueError("Every scenario must share the committed block")
+            decisions = 0
+            for t in range(steps):
+                _, inverse = np.unique(groups[:, t], return_inverse=True)
+                charge_cols[:, t] = decisions + inverse
+                decisions += int(inverse.max()) + 1
+            discharge_cols = charge_cols + decisions
+            self._soc_offset = 2 * decisions
+        self._mode_offset = self._soc_offset + scenarios * steps
+        self.num_col = self._mode_offset + committed
         soc_cols = self._soc_offset + np.arange(scenarios * steps).reshape(scenarios, steps)
         self.charge_cols = charge_cols
         self.discharge_cols = discharge_cols
@@ -164,9 +200,9 @@ class ScenarioDispatchModel:
         add(balance, discharge_cols, dt / asset.discharge_efficiency)
         # Committed-block mode: charge <= P*m and discharge + P*m <= P.
         mode_rows = scenarios * steps + np.arange(committed)
-        add(mode_rows, np.arange(committed), 1.0)
+        add(mode_rows, charge_cols[0, :committed], 1.0)
         add(mode_rows, self.mode_cols, -asset.power_mw)
-        add(mode_rows + committed, shared + np.arange(committed), 1.0)
+        add(mode_rows + committed, discharge_cols[0, :committed], 1.0)
         add(mode_rows + committed, self.mode_cols, asset.power_mw)
         self.num_row = scenarios * steps + 2 * committed
 
@@ -260,7 +296,7 @@ class ScenarioDispatchModel:
         highs.changeColsIntegrality(committed, self.mode_cols.astype(np.int32), integrality)
         highs.setOptionValue("mip_rel_gap", policy.mip_rel_gap)
         started = perf_counter()
-        _run_to_optimality(highs, "dispatch model")
+        highs = self.highs = _run_to_optimality(highs, "dispatch model")
         seconds = perf_counter() - started
         info = highs.getInfo()
         objective = float(info.objective_function_value)
@@ -286,7 +322,7 @@ class ScenarioDispatchModel:
                 fixed,
                 np.full(binary_count, highspy.HighsVarType.kContinuous),
             )
-            _run_to_optimality(highs, "fixed-mode LP")
+            highs = self.highs = _run_to_optimality(highs, "fixed-mode LP")
         highs_solution = highs.getSolution()
         if not highs_solution.dual_valid:
             raise RuntimeError("HiGHS returned no duals for the dispatch LP")
@@ -309,8 +345,8 @@ class ScenarioDispatchModel:
             values[np.abs(values) < 1e-8] = 0.0
             return np.clip(values, 0.0, asset.power_mw)
 
-        charge = clean(solution[:committed])
-        discharge = clean(solution[self.shared : self.shared + committed])
+        charge = clean(solution[self.charge_cols[0, :committed]])
+        discharge = clean(solution[self.discharge_cols[0, :committed]])
         economic = float(
             weight * (charge_value * solution[self.charge_cols]).sum()
             + weight * (discharge_value * solution[self.discharge_cols]).sum()
@@ -460,6 +496,8 @@ def run_forecast_policy(
     execution: str = "bid",
     planner: str = "optimise",
     rule_hours: int = 2,
+    tree_splits: tuple[tuple[int, int], ...] | None = None,
+    nonanticipativity: str = "two_stage",
     timetable: Timetable = NEM_TIMETABLE,
     band_log: list[dict[str, object]] | None = None,
     progress: Callable[[int, pd.Timestamp], None] | None = None,
@@ -477,7 +515,11 @@ def run_forecast_policy(
     scenario set with a shared committed block (layer 3), shared for
     ``shared_minutes`` if that is longer than the committed block.
     ``planner="rule"`` is the rule-based baseline of
-    :func:`~battery_dispatch.bidding.rule_limits`.
+    :func:`~battery_dispatch.bidding.rule_limits`. With ``tree_splits`` (in
+    intervals) the scenario fan is first bundled into a tree
+    (:func:`~battery_dispatch.scenario_tree.bundle_to_tree`), and
+    ``nonanticipativity="tree"`` shares every decision while scenarios share
+    their history instead of only the committed block.
 
     ``execution`` sets how the committed block meets realised prices (see
     :mod:`battery_dispatch.bidding`): ``"bands"`` re-prices ``bands`` tranches
@@ -496,6 +538,10 @@ def run_forecast_policy(
         raise ValueError(f"planner must be one of {PLANNERS}")
     if planner == "rule" and scenarios is not None:
         raise ValueError("The rule-based planner takes no scenarios")
+    if nonanticipativity not in ("two_stage", "tree"):
+        raise ValueError("nonanticipativity must be 'two_stage' or 'tree'")
+    if nonanticipativity == "tree" and (tree_splits is None or scenarios is None):
+        raise ValueError("A scenario tree needs scenarios and tree_splits")
     error_model = band_errors or scenarios
     spread = execution in ("bands", "fixed_bands")
     if spread and error_model is None:
@@ -546,7 +592,7 @@ def run_forecast_policy(
     end = len(combined)
     current_soc = asset.initial_soc_mwh if soc_initial is None else float(soc_initial)
     starting_soc = current_soc
-    models: dict[tuple[int, int, int, int], ScenarioDispatchModel] = {}
+    models: dict[tuple[int, int, int, int, int | None], ScenarioDispatchModel] = {}
 
     def plan(position: int, steps: int, take: int, soc: float, key: int) -> _Plan:
         """Forecast, then optimise or apply the rule, and price the tranches.
@@ -602,13 +648,29 @@ def run_forecast_policy(
             )
         paths = base[np.newaxis, :] if scenarios is None else scenarios.scenarios(errors, base, key)
         paths = np.clip(paths, MARKET_FLOOR_PRICE, cap[window])
+        groups = None
+        if tree_splits is not None and scenarios is not None:
+            paths, labels = bundle_to_tree(paths, tree_splits, commit)
+            if nonanticipativity == "tree":
+                groups = labels
         charge_value = -dt * load[window] * paths
         discharge_value = dt * (generation[window] * paths - deg_cost)
         shared = min(max(share, take), steps)
-        shape = (steps, take, paths.shape[0], shared)
+        shape = (
+            steps,
+            take,
+            paths.shape[0],
+            shared,
+            None if groups is None else hash(groups.tobytes()),
+        )
         if shape not in models:
             models[shape] = ScenarioDispatchModel(
-                asset, steps=steps, committed=take, scenarios=paths.shape[0], shared=shared
+                asset,
+                steps=steps,
+                committed=take,
+                scenarios=paths.shape[0],
+                shared=shared,
+                groups=groups,
             )
         result = models[shape].solve(
             charge_value,
@@ -808,6 +870,8 @@ def run_forecast_policy(
                     0 if solution is None else solution.exclusivity_binary_count
                 ),
                 "scenario_count": result.scenario_count,
+                # The plan's own expected value of its look-ahead, A$.
+                "planned_objective": np.nan if solution is None else solution.objective_value,
                 "error_pool_days": result.error_pool_days,
                 "band_spread_aud": float(result.offsets[-1] - result.offsets[0]),
                 "window_start": timestamps.iloc[position],

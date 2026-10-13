@@ -120,3 +120,44 @@ def test_rolling_horizon_records_the_policy_it_was_given() -> None:
     assert_audit_passes(
         {**passing_audit(), **audit}, mip_gap_tolerance=1e-3
     )
+
+
+def test_a_stuck_warm_start_is_solved_by_a_fresh_instance() -> None:
+    """HiGHS can report Unknown on a warm instance at the optimum; rebuild once."""
+    import highspy
+
+    from battery_dispatch.config import BatteryConfig
+    from battery_dispatch.mpc import ScenarioDispatchModel, _run_to_optimality
+
+    asset = BatteryConfig(generation_loss_factor=1.0, load_loss_factor=1.0)
+    import numpy as np
+
+    model = ScenarioDispatchModel(asset, steps=4, committed=1, scenarios=1)
+    prices = np.array([[10.0, 80.0, -20.0, 50.0]])
+    model.solve(-prices / 12, prices / 12, 50.0)
+    real = model.highs
+
+    class Stuck:
+        runs = 0
+
+        def run(self) -> None:
+            Stuck.runs += 1
+
+        def getModelStatus(self):  # noqa: N802 - mirrors highspy
+            return highspy.HighsModelStatus.kUnknown
+
+        def clearSolver(self) -> None:  # noqa: N802
+            pass
+
+        def getOptionValue(self, name):  # noqa: N802
+            return real.getOptionValue(name)
+
+        def getLp(self):  # noqa: N802
+            return real.getLp()
+
+        def modelStatusToString(self, status):  # noqa: N802
+            return real.modelStatusToString(status)
+
+    solved = _run_to_optimality(Stuck(), "test model")
+    assert Stuck.runs == 2
+    assert solved.getModelStatus() == highspy.HighsModelStatus.kOptimal

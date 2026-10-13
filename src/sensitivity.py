@@ -54,9 +54,7 @@ def run_sensitivities(
                 policy=policy,
                 progress=progress,
             )
-            revenue = settle(
-                trace, prices, asset, deg_cost=float(degradation_cost)
-            )
+            revenue = settle(trace, prices, asset, deg_cost=float(degradation_cost))
             run_hash = asset.config_hash(
                 extra={
                     "endpoint_case": endpoint.name,

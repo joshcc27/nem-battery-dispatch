@@ -75,6 +75,11 @@ class LayerSettings:
     # The rule-based baseline charges in this many cheapest forecast hours and
     # discharges in as many dearest.
     rule_hours: int = 2
+    # Section 5 extension: bundle layer 3's scenario fan into a tree that
+    # splits at these "minutes:branching" points, and plan it as a two-stage
+    # problem ("two_stage") or a scenario tree ("tree"). None leaves the fan.
+    tree_splits: str | None = None
+    nonanticipativity: str = "two_stage"
 
     def __post_init__(self) -> None:
         if self.latency_minutes < 0 or self.latency_minutes % 5:

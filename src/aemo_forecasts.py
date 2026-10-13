@@ -242,9 +242,11 @@ class ForecastCache:
         decision reads forecasts at least three weeks into the warm-up month.
         """
         first = pd.Timestamp(start).tz_localize(None).to_period("M").start_time
-        last = (pd.Timestamp(end).tz_localize(None) - pd.Timedelta(minutes=5)).to_period(
-            "M"
-        ).start_time
+        last = (
+            (pd.Timestamp(end).tz_localize(None) - pd.Timedelta(minutes=5))
+            .to_period("M")
+            .start_time
+        )
         months = list(pd.date_range(first, last, freq="MS"))
         return {
             table: ForecastRuns.from_frame(

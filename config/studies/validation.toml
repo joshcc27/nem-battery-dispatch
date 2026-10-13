@@ -1,0 +1,13 @@
+# Validation: three continuous months no earlier choice looked at, for the
+# sensitivity study and the selection rule of docs/PROTOCOL.md section 6.
+name = "val"
+stage = "validation"
+start = "2022-12-01 00:00"
+end = "2023-03-01 00:00"
+policies = ["ceiling", "oracle", "noop", "rule_profile", "rule_aemo",
+            "L2_persistence", "L2_profile", "L2_aemo", "L3_profile", "L3_aemo"]
+executions = ["fixed_bands", "bands"]
+seeds = [101, 202, 303]
+
+[settings]
+deg_cost = 25.0

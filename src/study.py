@@ -65,6 +65,7 @@ from .forecast import (
 from .layers import LayerSettings
 from .mlf import file_sha256, load_loss_factor_schedule
 from .mpc import run_forecast_policy
+from .scenario_tree import parse_splits
 from .settlement import settle
 from .validation import (
     assert_audit_passes,
@@ -382,6 +383,12 @@ def run_task(
                 execution=task.execution,
                 planner="rule" if spec.planner == "rule" else "optimise",
                 rule_hours=settings.rule_hours,
+                tree_splits=(
+                    None
+                    if settings.tree_splits is None
+                    else parse_splits(settings.tree_splits, asset.interval_minutes)
+                ),
+                nonanticipativity=settings.nonanticipativity,
                 timetable=NEM_TIMETABLE,
                 band_log=band_log,
             )
@@ -509,6 +516,8 @@ def run_task(
         "window_id",
         "error_pool_days",
         "band_spread_aud",
+        "planned_objective",
+        "solve_seconds",
     ]
     kept = intervals[[c for c in columns if c in intervals]].copy()
     return {
@@ -683,9 +692,14 @@ def run_study(
     output: Path = Path("runs"),
     jobs: int = 1,
     root: Path = Path("."),
-    report: Callable[[str], None] = print,
+    report: Callable[[str], None] | None = None,
 ) -> Path:
     """Run every task of ``config`` and write ``output/<run_id>/``."""
+    if report is None:
+
+        def report(message: str) -> None:
+            print(message, flush=True)
+
     check_protocol(config, root)
     source = git_state(root)
     if config.stage == "test" and not source["source_tree_clean"]:

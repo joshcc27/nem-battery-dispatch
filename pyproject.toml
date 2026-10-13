@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6"]
+report = ["matplotlib>=3.8"]
 
 [project.scripts]
 battery-dispatch = "battery_dispatch.cli:main"
