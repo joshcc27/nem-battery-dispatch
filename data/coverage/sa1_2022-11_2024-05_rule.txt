@@ -1,0 +1,1 @@
+exclude a month if any price interval is missing, if any interval has no configured loss factor or price cap, or if a current AEMO pre-dispatch or P5MIN run exists at fewer than 90% of its five-minute decision times

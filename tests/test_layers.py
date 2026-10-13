@@ -84,13 +84,13 @@ def test_every_layer_runs_is_audited_and_sits_under_the_bound() -> None:
     )
     summary = result.summary.set_index("layer")
     assert tuple(summary.index) == LAYER_ORDER
-    bound = summary.loc["L1_bound", "total_revenue"]
+    bound = summary.loc["ceiling", "total_revenue"]
     assert (summary["total_revenue"] <= bound + 1e-6).all()
     assert (summary["gap_to_bound_aud"] >= -1e-6).all()
-    assert summary.loc["L1_perfect_forecast", "loss_making_cycle_count"] == 0
-    assert summary.loc["L1_perfect_forecast", "committed_forecast_mae"] == 0
+    assert summary.loc["oracle", "loss_making_cycle_count"] == 0
+    assert summary.loc["oracle", "committed_forecast_mae"] == 0
     # A perfect forecast has no errors, so its bands collapse to one limit.
-    assert summary.loc["L1_perfect_forecast", "median_band_spread_aud"] == 0
+    assert summary.loc["oracle", "median_band_spread_aud"] == 0
     assert summary.loc["L2_aemo", "median_band_spread_aud"] > 0
     assert summary.loc["L3_aemo", "scenario_count"] == SETTINGS.scenario_count
     # The published forecasts are far closer than the profile.
@@ -102,10 +102,10 @@ def test_every_layer_runs_is_audited_and_sits_under_the_bound() -> None:
     assert len(result.bound_dispatch) == 4 * 24
 
     gaps = layer_gaps(result.summary)
-    assert gaps["value_of_perfect_information_aemo"] == pytest.approx(
+    assert gaps["gap_ceiling_to_l3_aemo"] == pytest.approx(
         bound - summary.loc["L3_aemo", "total_revenue"]
     )
-    assert gaps["cadence_cost_under_perfect_forecast"] >= -1e-6
+    assert gaps["oracle_gap_to_ceiling"] >= -1e-6
 
 
 def test_layers_without_aemo_forecasts_leave_those_layers_out() -> None:
@@ -114,8 +114,8 @@ def test_layers_without_aemo_forecasts_leave_those_layers_out() -> None:
     data = frame(history_len // 24 + 2)
     result = run_layers(data.iloc[history_len:], data.iloc[:history_len], asset, SETTINGS)
     assert "L2_aemo" not in set(result.summary["layer"])
-    assert "value_of_stochastic_solution_aemo" not in layer_gaps(result.summary)
-    assert "value_of_stochastic_solution_profile" in layer_gaps(result.summary)
+    assert "realized_stochastic_uplift_aemo" not in layer_gaps(result.summary)
+    assert "realized_stochastic_uplift_profile" in layer_gaps(result.summary)
 
 
 def test_layers_refuse_too_little_history() -> None:

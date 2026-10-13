@@ -12,3 +12,5 @@ dist/
 data/cache/
 outputs/
 analysis/
+runs/
+data/cache_stale_*/

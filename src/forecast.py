@@ -72,8 +72,7 @@ class SameTimeProfile:
     def forecast(self, history: np.ndarray, steps: int) -> np.ndarray:
         if len(history) < self.min_history:
             raise ValueError(
-                f"{self.name} needs {self.min_history} intervals of history, "
-                f"got {len(history)}"
+                f"{self.name} needs {self.min_history} intervals of history, got {len(history)}"
             )
         recent = np.asarray(history[-self.min_history :], dtype=float)
         profile = np.median(recent.reshape(self.days, self.periods_per_day), axis=0)
@@ -258,3 +257,70 @@ class ErrorBootstrap:
     ) -> np.ndarray:
         errors = self.errors(forecaster, history, len(base))
         return self.scenarios(errors, base, decision_index)
+
+
+@dataclass(frozen=True)
+class LaggedForecaster:
+    """A forecaster whose information is ``lag`` intervals old at the decision.
+
+    A decision at time ``t`` normally sees the price of the interval ending at
+    ``t`` and every AEMO run published by ``t``. With a lag it sees only what
+    was available at ``t - lag``: the inner forecaster is run from the shorter
+    history over the extra intervals, and those are dropped. The error pool,
+    which re-runs the same forecaster at past decisions, inherits the lag.
+    """
+
+    inner: Forecaster
+    lag: int
+
+    def __post_init__(self) -> None:
+        if self.lag < 0:
+            raise ValueError("lag must be non-negative")
+
+    @property
+    def name(self) -> str:
+        return self.inner.name if self.lag == 0 else f"{self.inner.name}_lag{self.lag}"
+
+    @property
+    def min_history(self) -> int:
+        return int(getattr(self.inner, "min_history", 0)) + self.lag
+
+    def covers(self, position: int) -> bool:
+        covers = getattr(self.inner, "covers", None)
+        return True if covers is None else bool(covers(position - self.lag))
+
+    def forecast(self, history: np.ndarray, steps: int) -> np.ndarray:
+        if self.lag == 0:
+            return self.inner.forecast(history, steps)
+        return self.inner.forecast(history[: -self.lag], steps + self.lag)[self.lag :]
+
+
+@dataclass(frozen=True)
+class ThinnedErrorHistory:
+    """The same forecasts, with no error history from decisions before ``first``.
+
+    It changes nothing about the forecast itself, only which past decisions the
+    error bootstrap may learn from, so comparing it with the full history on
+    the same dates isolates the effect of a thin error pool (as after AEMO's
+    October 2022 archive gap) from the market conditions of the month.
+    """
+
+    inner: Forecaster
+    first: int
+
+    @property
+    def name(self) -> str:
+        return self.inner.name
+
+    @property
+    def min_history(self) -> int:
+        return int(getattr(self.inner, "min_history", 0))
+
+    def covers(self, position: int) -> bool:
+        if position < self.first:
+            return False
+        covers = getattr(self.inner, "covers", None)
+        return True if covers is None else bool(covers(position))
+
+    def forecast(self, history: np.ndarray, steps: int) -> np.ndarray:
+        return self.inner.forecast(history, steps)

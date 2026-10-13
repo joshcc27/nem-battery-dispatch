@@ -1,0 +1,15 @@
+# Development: the reference month April 2023, used while building the
+# fixed-band execution, the rule-based baseline and the study runner. These
+# months (with November 2022) are where earlier choices were inspected, so
+# nothing measured here is evidence for the final claim.
+name = "dev-2023-04"
+stage = "development"
+start = "2023-04-01 00:00"
+end = "2023-05-01 00:00"
+policies = ["ceiling", "oracle", "noop", "rule_profile", "rule_aemo",
+            "L2_persistence", "L2_profile", "L2_aemo", "L3_profile", "L3_aemo"]
+executions = ["fixed_bands", "bands"]
+seeds = [20221101]
+
+[settings]
+deg_cost = 25.0

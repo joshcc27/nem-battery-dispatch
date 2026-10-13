@@ -147,7 +147,7 @@ def main() -> None:
         gap_rows.append({"month": label, **layer_gaps(result.summary)})
         for layer, trace in result.traces.items():
             trace.to_csv(trace_dir / f"{label}_{layer}.csv", index=False)
-        result.bound_dispatch.to_csv(trace_dir / f"{label}_L1_bound.csv", index=False)
+        result.bound_dispatch.to_csv(trace_dir / f"{label}_ceiling.csv", index=False)
 
     results = pd.concat(summaries, ignore_index=True)
     results["layer"] = pd.Categorical(results["layer"], LAYER_ORDER, ordered=True)

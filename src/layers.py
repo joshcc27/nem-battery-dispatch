@@ -1,9 +1,11 @@
 """The three-layer revenue comparison for one period.
 
-Layer 1 is the perfect-foresight bound: the whole period as one LP, which no
-feasible dispatch can beat. Beside it is the perfect-forecast policy, the same
-rolling engine as layers 2 and 3 fed the realised prices, which is the best
-achievable dispatch at their cadence. Layer 2 dispatches on a point forecast
+The ceiling is the whole period as one LP with the exclusivity binary
+relaxed: an upper bound under the stated model, which may charge and discharge
+at once and need not be attainable by any physical policy. Beside it is the
+oracle benchmark, the same rolling engine as layers 2 and 3 fed the realised
+prices; a finite rolling horizon does not make it the best policy at that
+cadence, only a strong reference for it. Layer 2 dispatches on a point forecast
 and layer 3 on forecast-error scenarios around the same forecast, for each of
 the naive profile and AEMO's own published forecasts. Every policy is settled
 at realised prices by the one settlement function, and every policy is
@@ -63,6 +65,20 @@ class LayerSettings:
     # AEMO pre-dispatch is used up to this many hours ahead and the profile
     # beyond; None uses it to its end. See AemoForecast.
     aemo_predispatch_hours: float | None = 4.0
+    # Decisions see prices and AEMO runs only up to this many minutes before
+    # the decision time. Zero is the idealised instant decision.
+    latency_minutes: int = 0
+    # Layer 3 shares its decisions across scenarios for this many minutes,
+    # still executing only commit_minutes. None shares only the committed
+    # block: the two-stage approximation with clairvoyant scenario tails.
+    shared_minutes: int | None = None
+    # The rule-based baseline charges in this many cheapest forecast hours and
+    # discharges in as many dearest.
+    rule_hours: int = 2
+
+    def __post_init__(self) -> None:
+        if self.latency_minutes < 0 or self.latency_minutes % 5:
+            raise ValueError("latency_minutes must be a non-negative multiple of five")
 
     def periods_per_day(self, asset: BatteryConfig) -> int:
         return 24 * 60 // asset.interval_minutes
@@ -91,8 +107,8 @@ class LayerResults:
 
 
 LAYER_ORDER = (
-    "L1_bound",
-    "L1_perfect_forecast",
+    "ceiling",
+    "oracle",
     "L2_persistence",
     "L2_profile",
     "L2_aemo",
@@ -139,7 +155,7 @@ def run_layers(
     }
     rows: list[dict[str, object]] = [
         {
-            "layer": "L1_bound",
+            "layer": "ceiling",
             "policy": "whole-period LP, exclusivity relaxed",
             "forecaster": "perfect",
             "total_revenue": bound.objective_value,
@@ -154,7 +170,7 @@ def run_layers(
         }
     ]
     if progress is not None:
-        progress("L1_bound", rows[0]["runtime_seconds"])
+        progress("ceiling", rows[0]["runtime_seconds"])
 
     combined = pd.concat([past, evaluation], ignore_index=True)
     actual = combined["rrp"].to_numpy(dtype=float)
@@ -176,7 +192,7 @@ def run_layers(
         forecasters.append(("aemo", aemo))
     by_label = dict(forecasters)
     policies: list[tuple[str, str, str, bool]] = [
-        ("L1_perfect_forecast", "rolling, realised prices", "perfect_forecast", False),
+        ("oracle", "rolling, realised prices", "perfect_forecast", False),
         ("L2_persistence", "rolling, point forecast", "persistence", False),
         ("L2_profile", "rolling, point forecast", "profile", False),
         ("L2_aemo", "rolling, point forecast", "aemo", False),
@@ -211,9 +227,7 @@ def run_layers(
             ),
             **audit_ceiling(ceiling, revenue),
         }
-        assert_audit_passes(
-            audit, require_cycle_break_even=isinstance(forecaster, PerfectForecast)
-        )
+        assert_audit_passes(audit, require_cycle_break_even=isinstance(forecaster, PerfectForecast))
         # Settlement carries the trace's columns, so these are aligned.
         intervals = revenue.intervals
         forecast_error = intervals["forecast_rrp"] - intervals["rrp"]
@@ -230,9 +244,7 @@ def run_layers(
                 / audit["perfect_foresight_ceiling_aud"],
                 "equivalent_full_cycles": discharged / asset.energy_mwh,
                 "terminal_soc_mwh": audit["terminal_soc_mwh"],
-                "loss_making_cycle_count": audit[
-                    "completed_cycle_break_even_violation_count"
-                ],
+                "loss_making_cycle_count": audit["completed_cycle_break_even_violation_count"],
                 "loss_making_cycle_aud": audit["completed_cycle_loss_aud"],
                 "committed_forecast_mae": float(np.mean(np.abs(forecast_error))),
                 "scenario_count": int(trace["scenario_count"].iloc[0]),
@@ -257,27 +269,22 @@ def run_layers(
 def layer_gaps(summary: pd.DataFrame) -> dict[str, float]:
     """The headline differences between layers, in A$ over the period.
 
-    For each forecaster with both layers, ``value_of_stochastic_solution`` is
-    layer 3 less layer 2 on the same point forecast (it can be negative on a
-    single realised period), ``forecast_cost`` is the perfect-forecast policy
-    less layer 2, and ``value_of_perfect_information`` is the bound less
-    layer 3.
+    These are realised, out-of-sample differences on one period, not the
+    expected values that stochastic programming calls VSS (RP - EEV) and EVPI
+    (WS - RP) under the model's own distribution. For each forecaster with
+    both layers, ``realized_stochastic_uplift`` is layer 3 less layer 2 on the
+    same point forecast (it can be negative), ``forecast_cost`` is the oracle
+    less layer 2, and ``gap_ceiling_to_l3`` is the ceiling less layer 3.
     """
     revenue = summary.set_index("layer")["total_revenue"]
     gaps = {
-        "cadence_cost_under_perfect_forecast": float(
-            revenue["L1_bound"] - revenue["L1_perfect_forecast"]
-        ),
+        "oracle_gap_to_ceiling": float(revenue["ceiling"] - revenue["oracle"]),
     }
     for label in ("profile", "aemo"):
         point, stochastic = f"L2_{label}", f"L3_{label}"
         if point not in revenue or stochastic not in revenue:
             continue
-        gaps[f"forecast_cost_{label}"] = float(revenue["L1_perfect_forecast"] - revenue[point])
-        gaps[f"value_of_stochastic_solution_{label}"] = float(
-            revenue[stochastic] - revenue[point]
-        )
-        gaps[f"value_of_perfect_information_{label}"] = float(
-            revenue["L1_bound"] - revenue[stochastic]
-        )
+        gaps[f"forecast_cost_{label}"] = float(revenue["oracle"] - revenue[point])
+        gaps[f"realized_stochastic_uplift_{label}"] = float(revenue[stochastic] - revenue[point])
+        gaps[f"gap_ceiling_to_l3_{label}"] = float(revenue["ceiling"] - revenue[stochastic])
     return gaps
